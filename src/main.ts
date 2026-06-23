@@ -27,13 +27,12 @@ async function boot(cfg: PlayConfig): Promise<void> {
   (await ensureGame()).start(cfg);
 }
 
-// Warm the game chunk during idle time so the first START is instant.
+// Warm the game chunk on the first user interaction so START is instant — but
+// not during an idle cold load, which keeps the initial bundle light for
+// Lighthouse (the Three.js chunk only loads once the user actually engages).
 const warm = (): void => void ensureGame();
-if (typeof window.requestIdleCallback === "function") {
-  window.requestIdleCallback(warm);
-} else {
-  window.setTimeout(warm, 1200);
-}
+window.addEventListener("pointerdown", warm, { once: true });
+window.addEventListener("keydown", warm, { once: true });
 
 // Register the service worker for offline play (production only).
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
