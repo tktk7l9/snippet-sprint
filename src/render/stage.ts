@@ -10,10 +10,6 @@ export interface StageSignals {
   accuracy: number;
   /** Whether a run is currently in progress. */
   active: boolean;
-  /** 0..1 extra forward tunnel speed (Code Runner). */
-  rush?: number;
-  /** 0..1 red danger tint (runner crash / low lives). */
-  danger?: number;
 }
 
 const STAR_COUNT = 1100;
@@ -94,11 +90,8 @@ export class Stage {
   }
 
   update(dt: number, s: StageSignals): void {
-    // tunnel speed accelerates with combo and with the runner's "rush"
-    const rush = s.rush ?? 0;
-    const targetSpeed = s.active
-      ? 3 + Math.min(s.combo, 60) * 0.12 + rush * 22
-      : 0.6;
+    // tunnel speed accelerates with combo
+    const targetSpeed = s.active ? 3 + Math.min(s.combo, 60) * 0.12 : 0.6;
     this.speed += (targetSpeed - this.speed) * Math.min(1, dt * 2);
 
     for (const ring of this.rings) {
@@ -123,10 +116,6 @@ export class Stage {
       this.tmpColor.copy(this.accentColor).lerp(this.goodColor, 0.6);
     } else {
       this.tmpColor.copy(this.errColor).lerp(this.accentColor, Math.max(0, Math.min(1, s.accuracy)));
-    }
-    const danger = s.danger ?? 0;
-    if (danger > 0) {
-      this.tmpColor.lerp(this.errColor, Math.min(1, danger));
     }
     this.ringMat.color.copy(this.tmpColor);
     (this.stars.material as THREE.PointsMaterial).color.copy(this.tmpColor);

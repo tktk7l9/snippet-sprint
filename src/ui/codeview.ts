@@ -1,5 +1,5 @@
 // Renders a TypingSession into a target element as per-character spans,
-// updating only the spans whose state changed. Shared by Sprint and Runner.
+// updating only the spans whose state changed.
 
 import type { TypingSession } from "../engine/typing.js";
 
