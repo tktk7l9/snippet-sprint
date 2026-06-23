@@ -83,6 +83,7 @@ export class SprintMode implements GameMode {
       combo: snap.combo,
       accuracy: snap.accuracy,
       active: this.session !== null && !this.session.isComplete(),
+      language: this.current?.language,
     };
   }
 

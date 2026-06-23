@@ -48,9 +48,8 @@ export function createGame(screens: Screens): GameController {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const canvas = byId<HTMLCanvasElement>("scene");
   const ctx = createRenderContext(canvas, reducedMotion);
-  const stage = new Stage();
+  const stage = new Stage(ctx);
   const effects = new EffectsLayer(reducedMotion);
-  ctx.scene.add(stage.group);
   ctx.scene.add(effects.group);
 
   const audio = new AudioEngine();

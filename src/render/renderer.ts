@@ -9,6 +9,8 @@ export interface RenderContext {
   camera: THREE.PerspectiveCamera;
   composer: EffectComposer;
   bloom: UnrealBloomPass;
+  /** Scene fog, recolored per language by the Stage. */
+  fog: THREE.FogExp2;
   /** Baseline bloom strength that effects decay back toward. */
   baseBloom: number;
   resize(): void;
@@ -40,7 +42,8 @@ export function createRenderContext(
   renderer.toneMappingExposure = 1.1;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(NEON.bg, 0.026);
+  const fog = new THREE.FogExp2(NEON.bg, 0.026);
+  scene.fog = fog;
 
   const camera = new THREE.PerspectiveCamera(
     58,
@@ -93,5 +96,5 @@ export function createRenderContext(
     composer.render();
   }
 
-  return { renderer, scene, camera, composer, bloom, baseBloom, resize, render };
+  return { renderer, scene, camera, composer, bloom, fog, baseBloom, resize, render };
 }
