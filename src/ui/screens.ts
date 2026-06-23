@@ -1,24 +1,12 @@
 // Overlay screens: start (language/category/difficulty picker), results
 // (rank + stats + mistake analysis), pause and help.
 
-import {
-  CATEGORY_LABELS,
-  CATEGORY_ORDER,
-  DIFFICULTY_LABELS,
-  DIFFICULTY_ORDER,
-  LANGUAGE_LABELS,
-  LANGUAGE_ORDER,
-} from "../engine/content/types.js";
+import { LANGUAGE_ORDER } from "../engine/content/types.js";
 import type { Category, Difficulty, Language } from "../engine/content/types.js";
 import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
 import type { MissEntry } from "../engine/stats.js";
-import {
-  MODE_LABELS,
-  MODE_ORDER,
-  type ModeId,
-  type PlayConfig,
-} from "../modes/types.js";
+import type { ModeId, PlayConfig } from "../modes/types.js";
 import { byId } from "./dom.js";
 
 export type { PlayConfig };
@@ -68,10 +56,11 @@ export class Screens {
   private category: Category | "all" = "all";
 
   constructor(handlers: ScreenHandlers) {
-    this.buildModePills();
-    this.buildLangPills();
-    this.buildDiffPills();
-    this.buildCatPills();
+    // Pills are pre-rendered in the HTML (avoids layout shift); bind handlers.
+    this.bindSingle("mode-pills", (id) => (this.mode = id as ModeId));
+    this.bindSingle("cat-pills", (id) => (this.category = id as Category | "all"));
+    this.bindSingle("diff-pills", (id) => (this.difficulty = id as Difficulty | "mixed"));
+    this.bindLangs();
 
     byId("start-btn").addEventListener("click", () => handlers.onStart(this.config()));
     byId("btn-retry").addEventListener("click", () => handlers.onRetry());
@@ -131,88 +120,34 @@ export class Screens {
     this.helpEl.classList.remove("show");
   }
 
-  // ---- start screen pills ----
-  private buildModePills(): void {
-    const container = byId("mode-pills");
-    const buttons: HTMLButtonElement[] = [];
-    for (const id of MODE_ORDER) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = id === this.mode ? "pill active" : "pill";
-      btn.textContent = MODE_LABELS[id];
+  // ---- start screen pills (bind to pre-rendered buttons) ----
+  /** Single-select group: clicking activates one button and reports its data-id. */
+  private bindSingle(containerId: string, onPick: (id: string) => void): void {
+    const btns = [...byId(containerId).querySelectorAll<HTMLButtonElement>(".pill")];
+    for (const btn of btns) {
       btn.addEventListener("click", () => {
-        this.mode = id;
-        for (const b of buttons) b.classList.remove("active");
+        for (const b of btns) b.classList.remove("active");
         btn.classList.add("active");
+        onPick(btn.dataset.id ?? "");
       });
-      buttons.push(btn);
-      container.appendChild(btn);
     }
   }
 
-  private buildLangPills(): void {
-    const container = byId("lang-pills");
-    for (const lang of LANGUAGE_ORDER) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "pill active";
-      btn.textContent = LANGUAGE_LABELS[lang];
+  /** Multi-select languages: toggle, but keep at least one active. */
+  private bindLangs(): void {
+    const btns = [...byId("lang-pills").querySelectorAll<HTMLButtonElement>(".pill")];
+    for (const btn of btns) {
+      const id = (btn.dataset.id ?? "") as Language;
       btn.addEventListener("click", () => {
-        if (this.selectedLangs.has(lang)) {
+        if (this.selectedLangs.has(id)) {
           if (this.selectedLangs.size === 1) return; // keep at least one
-          this.selectedLangs.delete(lang);
+          this.selectedLangs.delete(id);
           btn.classList.remove("active");
         } else {
-          this.selectedLangs.add(lang);
+          this.selectedLangs.add(id);
           btn.classList.add("active");
         }
       });
-      container.appendChild(btn);
-    }
-  }
-
-  private buildDiffPills(): void {
-    const container = byId("diff-pills");
-    const opts: { id: Difficulty | "mixed"; label: string }[] = [
-      { id: "mixed", label: "Mixed" },
-      ...DIFFICULTY_ORDER.map((d) => ({ id: d, label: DIFFICULTY_LABELS[d] })),
-    ];
-    const buttons: HTMLButtonElement[] = [];
-    for (const opt of opts) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.dataset.diff = "1";
-      btn.className = opt.id === this.difficulty ? "pill active" : "pill";
-      btn.textContent = opt.label;
-      btn.addEventListener("click", () => {
-        this.difficulty = opt.id;
-        for (const b of buttons) b.classList.remove("active");
-        btn.classList.add("active");
-      });
-      buttons.push(btn);
-      container.appendChild(btn);
-    }
-  }
-
-  private buildCatPills(): void {
-    const container = byId("cat-pills");
-    const opts: { id: Category | "all"; label: string }[] = [
-      { id: "all", label: "All" },
-      ...CATEGORY_ORDER.map((c) => ({ id: c, label: CATEGORY_LABELS[c] })),
-    ];
-    const buttons: HTMLButtonElement[] = [];
-    for (const opt of opts) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = opt.id === this.category ? "pill active" : "pill";
-      btn.textContent = opt.label;
-      btn.addEventListener("click", () => {
-        this.category = opt.id;
-        for (const b of buttons) b.classList.remove("active");
-        btn.classList.add("active");
-      });
-      buttons.push(btn);
-      container.appendChild(btn);
     }
   }
 

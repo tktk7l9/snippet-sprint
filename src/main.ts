@@ -1,6 +1,7 @@
 // Light bootstrap. Only the start screen ships in the initial bundle; the
 // Three.js-heavy game runtime is loaded on demand (and warmed during idle).
 
+import "./styles.css";
 import { Screens } from "./ui/screens.js";
 import type { GameController } from "./game.js";
 import type { PlayConfig } from "./modes/types.js";
