@@ -1,6 +1,16 @@
 // Content model for the typing snippets. Pure data + type definitions.
 
-export type Language = "ts" | "py" | "go" | "rust" | "java" | "cpp" | "sql" | "drill";
+export type Language =
+  | "ts"
+  | "py"
+  | "go"
+  | "rust"
+  | "java"
+  | "cpp"
+  | "sql"
+  | "bash"
+  | "css"
+  | "drill";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -28,6 +38,8 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   java: "Java",
   cpp: "C++",
   sql: "SQL",
+  bash: "Bash",
+  css: "CSS",
   drill: "記号",
 };
 
@@ -55,6 +67,8 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "java",
   "cpp",
   "sql",
+  "bash",
+  "css",
   "drill",
 ];
 
