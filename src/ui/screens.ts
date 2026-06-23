@@ -1,7 +1,6 @@
 // Overlay screens: start (language/category/difficulty picker), results
 // (rank + stats + mistake analysis), pause and help.
 
-import { LANGUAGE_ORDER } from "../engine/content/types.js";
 import type { Category, Difficulty, Language } from "../engine/content/types.js";
 import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
@@ -50,7 +49,7 @@ export class Screens {
   private readonly pauseEl = byId("pause-overlay");
   private readonly helpEl = byId("help-overlay");
 
-  private readonly selectedLangs = new Set<Language>(LANGUAGE_ORDER);
+  private readonly selectedLangs = new Set<Language>(["ts"]);
   private difficulty: Difficulty | "mixed" = "mixed";
   private category: Category | "all" = "all";
 

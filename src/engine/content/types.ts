@@ -7,8 +7,14 @@ export type Language =
   | "rust"
   | "java"
   | "cpp"
+  | "csharp"
+  | "swift"
+  | "kotlin"
+  | "ruby"
+  | "php"
   | "sql"
   | "bash"
+  | "html"
   | "css"
   | "drill";
 
@@ -37,8 +43,14 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   rust: "Rust",
   java: "Java",
   cpp: "C++",
+  csharp: "C#",
+  swift: "Swift",
+  kotlin: "Kotlin",
+  ruby: "Ruby",
+  php: "PHP",
   sql: "SQL",
   bash: "Bash",
+  html: "HTML",
   css: "CSS",
   drill: "記号",
 };
@@ -66,8 +78,14 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "rust",
   "java",
   "cpp",
+  "csharp",
+  "swift",
+  "kotlin",
+  "ruby",
+  "php",
   "sql",
   "bash",
+  "html",
   "css",
   "drill",
 ];
