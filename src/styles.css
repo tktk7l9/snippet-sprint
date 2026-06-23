@@ -215,6 +215,17 @@ kbd {
 .btn.ghost:hover { color: var(--fg); background: rgba(255,255,255,0.04); box-shadow: none; }
 
 .pillgroup { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; pointer-events: auto; }
+
+/* grouped language selector */
+.lang-groups { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; max-width: 620px; }
+.lang-group { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.lang-group-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  opacity: 0.75;
+}
 .pill {
   background: rgba(10,14,32,0.6);
   border: 1px solid rgba(92, 242, 255, 0.3);
