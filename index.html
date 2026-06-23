@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <title>Snippet Sprint — Code Typing Trainer</title>
+    <meta name="description" content="実コードのスニペットを打って学ぶ、Three.js 製のプログラミング・タイピングゲーム。TS / JS / Python / Go / Rust と記号ドリル、WPM・正確率・コンボ・弱点分析つき。" />
+    <meta name="theme-color" content="#05060c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Snippet Sprint — Code Typing Trainer" />
+    <meta property="og:description" content="実コードのスニペットを打って学ぶ、Three.js 製のプログラミング・タイピングゲーム。" />
+    <meta property="og:url" content="https://snippet-sprint.vercel.app" />
+    <meta property="og:site_name" content="Snippet Sprint" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:image" content="https://snippet-sprint.vercel.app/ogp.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Snippet Sprint — Code Typing Trainer" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Snippet Sprint — Code Typing Trainer" />
+    <meta name="twitter:description" content="実コードのスニペットを打って学ぶ、Three.js 製のプログラミング・タイピングゲーム。" />
+    <meta name="twitter:image" content="https://snippet-sprint.vercel.app/ogp.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060c;
+        --fg: #e7eaf6;
+        --dim: #6c7390;
+        --accent: #5cf2ff;
+        --accent-2: #c77dff;
+        --good: #7CFFB2;
+        --warn: #ffb86b;
+        --err: #ff5d73;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background:
+          radial-gradient(ellipse at 20% 10%, rgba(199,125,255,0.18) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 90%, rgba(92,242,255,0.14) 0%, transparent 60%),
+          radial-gradient(ellipse at 50% 50%, #0c1030 0%, #04050a 75%);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Text",
+          "Hiragino Sans", "Yu Gothic UI", sans-serif;
+        overflow: hidden;
+      }
+      #app { position: relative; width: 100vw; height: 100dvh; }
+      canvas#scene { display: block; position: absolute; inset: 0; }
+      #hud { position: absolute; inset: 0; pointer-events: none; }
+
+      kbd {
+        background: rgba(92, 242, 255, 0.12);
+        border: 1px solid rgba(92, 242, 255, 0.3);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .panel {
+        position: absolute;
+        background: linear-gradient(180deg, rgba(10,14,32,0.72), rgba(7,9,22,0.62));
+        border: 1px solid rgba(92, 242, 255, 0.25);
+        border-radius: 12px;
+        padding: 12px 14px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-size: 13px;
+        line-height: 1.5;
+        box-shadow: 0 0 24px rgba(92,242,255,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+      }
+      .panel h2 {
+        margin: 0 0 6px 0;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      /* ---------- Play HUD ---------- */
+      #play-hud { display: none; }
+      #play-hud.show { display: block; }
+
+      #panel-stats { top: 16px; left: 16px; min-width: 168px; }
+      .stat-row { display: flex; justify-content: space-between; gap: 18px; }
+      .stat-row span:last-child {
+        color: var(--accent);
+        font-variant-numeric: tabular-nums;
+        font-family: ui-monospace, monospace;
+      }
+      #panel-meta { top: 16px; right: 16px; min-width: 168px; text-align: right; }
+      #panel-meta .meta-lang { font-size: 22px; font-weight: 700; color: var(--accent); }
+      #panel-meta .meta-cat { font-size: 12px; opacity: 0.7; }
+
+      #code-wrap, #runner-line-wrap {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(820px, calc(100vw - 48px));
+        pointer-events: none;
+      }
+      .codepre {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: clamp(15px, 2.4vw, 22px);
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+        tab-size: 2;
+        padding: 22px 26px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(8,11,26,0.82), rgba(5,7,18,0.78));
+        border: 1px solid rgba(92, 242, 255, 0.22);
+        box-shadow: 0 0 60px rgba(92,242,255,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        min-height: 64px;
+        margin: 0;
+      }
+      .codepre .ch { position: relative; border-radius: 2px; transition: color 0.05s linear; }
+      .codepre .ch.pending { color: var(--dim); }
+      .codepre .ch.correct { color: var(--accent); }
+      .codepre .ch.error {
+        color: var(--err);
+        background: rgba(255, 93, 115, 0.22);
+        border-radius: 3px;
+      }
+      .codepre .ch.current {
+        color: var(--fg);
+        background: rgba(92, 242, 255, 0.18);
+        box-shadow: 0 0 0 1px rgba(92,242,255,0.6), 0 0 16px rgba(92,242,255,0.35);
+        border-radius: 3px;
+      }
+      .codepre .ch.ret { opacity: 0.4; }
+      .codepre.shake { animation: shake 0.16s linear; }
+      #code-desc {
+        margin-top: 14px;
+        text-align: center;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: clamp(12px, 1.6vw, 14px);
+        line-height: 1.5;
+        color: rgba(124, 255, 178, 0.7);
+        min-height: 1.2em;
+      }
+      #code-desc::before { content: "// "; color: rgba(124, 255, 178, 0.45); }
+      #code-desc:empty { display: none; }
+
+      /* ---------- mode views + arcade HUD ---------- */
+      .mode-view { display: none; }
+      .mode-view.show { display: block; }
+      .mode-hint {
+        position: absolute;
+        left: 50%;
+        bottom: 92px;
+        transform: translateX(-50%);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--dim);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      #falling-lives, #crash { top: 16px; right: 16px; min-width: 132px; text-align: right; }
+      #fall-lives { font-size: 22px; letter-spacing: 3px; color: var(--err); }
+      #runner-stats, #falling-stats { top: 16px; left: 16px; min-width: 150px; }
+      #crash-track {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 93, 115, 0.16);
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      #crash-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--warn), var(--err));
+        box-shadow: 0 0 12px rgba(255,93,115,0.5);
+        transition: width 0.1s linear;
+      }
+      @keyframes shake {
+        0%,100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+
+      #progress {
+        position: absolute;
+        left: 50%;
+        bottom: 64px;
+        transform: translateX(-50%);
+        width: min(820px, calc(100vw - 48px));
+        height: 5px;
+        background: rgba(92, 242, 255, 0.12);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      #progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        box-shadow: 0 0 14px rgba(92,242,255,0.6);
+        transition: width 0.08s linear;
+      }
+
+      #status-bar {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        pointer-events: none;
+      }
+      .status-pill {
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-family: ui-monospace, monospace;
+        background: rgba(10,14,32,0.6);
+        backdrop-filter: blur(6px);
+      }
+      .status-pill.on { color: var(--accent); border: 1px solid rgba(92,242,255,0.5); }
+      .status-pill.off { color: var(--dim); border: 1px solid rgba(108,115,144,0.4); }
+
+      #help-fab {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10,14,32,0.7);
+        border: 1px solid rgba(92, 242, 255, 0.35);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        padding: 6px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        pointer-events: auto;
+        backdrop-filter: blur(6px);
+      }
+      #help-fab:hover { background: rgba(92,242,255,0.15); }
+
+      /* ---------- Buttons / pills ---------- */
+      .btn {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 12px 30px;
+        font-size: 15px;
+        letter-spacing: 0.22em;
+        cursor: pointer;
+        border-radius: 8px;
+        font-family: inherit;
+        pointer-events: auto;
+        transition: background 0.1s ease, box-shadow 0.1s ease;
+      }
+      .btn:hover { background: rgba(92,242,255,0.12); box-shadow: 0 0 28px rgba(92,242,255,0.3); }
+      .btn.ghost { color: var(--dim); border-color: rgba(108,115,144,0.5); letter-spacing: 0.16em; padding: 10px 22px; font-size: 13px; }
+      .btn.ghost:hover { color: var(--fg); background: rgba(255,255,255,0.04); box-shadow: none; }
+
+      .pillgroup { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; pointer-events: auto; }
+      .pill {
+        background: rgba(10,14,32,0.6);
+        border: 1px solid rgba(92, 242, 255, 0.3);
+        color: var(--fg);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        padding: 7px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.1s ease;
+      }
+      .pill:hover { background: rgba(92,242,255,0.12); }
+      .pill.active {
+        background: rgba(92,242,255,0.22);
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 16px rgba(92,242,255,0.25);
+      }
+      .pill[data-diff].active { border-color: var(--accent-2); background: rgba(199,125,255,0.2); color: var(--accent-2); box-shadow: 0 0 16px rgba(199,125,255,0.25); }
+
+      /* ---------- Overlays ---------- */
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 24px;
+        pointer-events: auto;
+        background: rgba(2, 4, 12, 0.72);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        text-align: center;
+      }
+      .overlay.show { display: flex; }
+
+      #start-screen .start-title {
+        font-size: clamp(40px, 8vw, 82px);
+        font-weight: 900;
+        color: var(--accent);
+        letter-spacing: 0.16em;
+        text-shadow: 0 0 60px var(--accent), 0 0 120px rgba(92,242,255,0.35);
+        margin: 0;
+        line-height: 1;
+      }
+      #start-screen .start-sub { font-size: clamp(13px, 2vw, 17px); color: var(--accent-2); letter-spacing: 0.3em; margin: 0; opacity: 0.9; }
+      .setup-block { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+      .setup-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
+      .start-hint { font-size: 12px; color: var(--fg); opacity: 0.5; letter-spacing: 0.18em; }
+
+      #results .result-rank {
+        font-size: clamp(72px, 14vw, 130px);
+        font-weight: 900;
+        line-height: 1;
+        margin: 0;
+        color: var(--accent);
+        text-shadow: 0 0 50px currentColor;
+      }
+      #results .result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        gap: 10px 28px;
+        font-variant-numeric: tabular-nums;
+      }
+      #results .result-grid .rv { font-size: 26px; font-family: ui-monospace, monospace; color: var(--accent); }
+      #results .result-grid .rl { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+      #mistakes {
+        max-width: 460px;
+        width: 100%;
+        font-size: 13px;
+      }
+      #mistakes h3 { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-2); margin: 0 0 8px; }
+      .miss-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+      .miss-key {
+        font-family: ui-monospace, monospace;
+        background: rgba(255,93,115,0.16);
+        border: 1px solid rgba(255,93,115,0.4);
+        color: var(--err);
+        border-radius: 4px;
+        padding: 1px 8px;
+        min-width: 30px;
+        text-align: center;
+      }
+      .miss-bar { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--err), var(--warn)); }
+      .miss-count { color: var(--dim); font-family: ui-monospace, monospace; }
+      .result-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+      #help-overlay h1 { font-size: clamp(26px, 5vw, 38px); margin: 0; color: var(--accent); letter-spacing: 0.16em; }
+      #help-overlay .help-body { max-width: 560px; font-size: 14px; line-height: 1.7; opacity: 0.9; text-align: left; }
+      #help-overlay .help-body kbd { margin: 0 1px; }
+
+      #pause-overlay h1 { font-size: clamp(44px, 9vw, 70px); margin: 0; color: var(--accent); letter-spacing: 0.3em; text-shadow: 0 0 36px var(--accent); }
+
+      #toast {
+        position: absolute;
+        top: 38%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        font-size: clamp(26px, 6vw, 46px);
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        color: var(--accent-2);
+        text-shadow: 0 0 30px currentColor;
+        opacity: 0;
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        pointer-events: none;
+      }
+      #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+      /* hidden input that summons the mobile soft keyboard */
+      #key-sink {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        border: 0;
+        padding: 0;
+        left: -100px;
+        top: -100px;
+        pointer-events: none;
+      }
+      #mobile-hint {
+        display: none;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        margin-top: 6px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .codepre.shake { animation: none; }
+        #toast { transition: opacity 0.2s ease-out; transform: translate(-50%, -50%); }
+        #progress-fill, #crash-fill { transition: none; }
+      }
+
+      @media (pointer: coarse), (max-width: 720px) {
+        #mobile-hint { display: block; }
+        #panel-stats, #panel-meta { padding: 8px 10px; min-width: 0; font-size: 12px; }
+        #panel-meta .meta-lang { font-size: 16px; }
+        #help-fab { top: 10px; }
+        #progress { bottom: 80px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div id="hud">
+        <!-- ===== Start screen ===== -->
+        <div id="start-screen" class="overlay show">
+          <h1 class="start-title">SNIPPET SPRINT</h1>
+          <p class="start-sub">CODE TYPING TRAINER</p>
+
+          <div class="setup-block">
+            <div class="setup-label">Mode</div>
+            <div id="mode-pills" class="pillgroup"></div>
+          </div>
+          <div class="setup-block">
+            <div class="setup-label">Languages</div>
+            <div id="lang-pills" class="pillgroup"></div>
+          </div>
+          <div class="setup-block">
+            <div class="setup-label">Category</div>
+            <div id="cat-pills" class="pillgroup"></div>
+          </div>
+          <div class="setup-block">
+            <div class="setup-label">Difficulty</div>
+            <div id="diff-pills" class="pillgroup"></div>
+          </div>
+
+          <button id="start-btn" class="btn" type="button">START</button>
+          <p class="start-hint">タイプして実力を測ろう · <kbd>Esc</kbd> でポーズ</p>
+          <p id="mobile-hint">タップでキーボードを表示</p>
+        </div>
+
+        <!-- ===== Play HUD ===== -->
+        <div id="play-hud">
+          <button id="help-fab" type="button">? HELP</button>
+          <div id="status-bar"></div>
+
+          <!-- Sprint -->
+          <div id="sprint-view" class="mode-view">
+            <div id="panel-stats" class="panel">
+              <h2>Stats</h2>
+              <div class="stat-row"><span>WPM</span><span id="stat-wpm">0</span></div>
+              <div class="stat-row"><span>正確率</span><span id="stat-acc">100%</span></div>
+              <div class="stat-row"><span>Combo</span><span id="stat-combo">0</span></div>
+              <div class="stat-row"><span>Time</span><span id="stat-time">0.0s</span></div>
+            </div>
+            <div id="panel-meta" class="panel">
+              <h2>Snippet</h2>
+              <div class="meta-lang" id="meta-lang">TS</div>
+              <div class="meta-cat" id="meta-cat">—</div>
+            </div>
+            <div id="code-wrap">
+              <pre id="code" class="codepre"></pre>
+              <div id="code-desc"></div>
+            </div>
+            <div id="progress"><div id="progress-fill"></div></div>
+          </div>
+
+          <!-- Falling Tokens -->
+          <div id="falling-view" class="mode-view">
+            <div id="falling-stats" class="panel">
+              <h2>Falling</h2>
+              <div class="stat-row"><span>Score</span><span id="fall-score">0</span></div>
+              <div class="stat-row"><span>Level</span><span id="fall-level">1</span></div>
+              <div class="stat-row"><span>Combo</span><span id="fall-combo">0</span></div>
+            </div>
+            <div id="falling-lives" class="panel">
+              <h2>Lives</h2>
+              <div id="fall-lives">♥♥♥</div>
+            </div>
+            <div class="mode-hint">落ちる前にタイプして撃破</div>
+          </div>
+
+          <!-- Code Runner -->
+          <div id="runner-view" class="mode-view">
+            <div id="runner-stats" class="panel">
+              <h2>Runner</h2>
+              <div class="stat-row"><span>Speed</span><span id="run-speed">0</span></div>
+              <div class="stat-row"><span>Dist</span><span id="run-dist">0m</span></div>
+              <div class="stat-row"><span>Combo</span><span id="run-combo">0</span></div>
+            </div>
+            <div id="crash" class="panel">
+              <h2>Crash</h2>
+              <div id="crash-track"><div id="crash-fill"></div></div>
+            </div>
+            <div id="runner-line-wrap">
+              <pre id="runner-line" class="codepre"></pre>
+            </div>
+            <div class="mode-hint">正しく打って加速 · ミスで減速</div>
+          </div>
+        </div>
+
+        <!-- ===== Results ===== -->
+        <div id="results" class="overlay">
+          <h1 class="result-rank" id="result-rank">S</h1>
+          <div class="result-grid">
+            <div><div class="rv" id="result-wpm">0</div><div class="rl">WPM</div></div>
+            <div><div class="rv" id="result-acc">0%</div><div class="rl">正確率</div></div>
+            <div><div class="rv" id="result-score">0</div><div class="rl">Score</div></div>
+            <div><div class="rv" id="result-combo">0</div><div class="rl">Max Combo</div></div>
+          </div>
+          <div id="result-best"></div>
+          <div id="mistakes"></div>
+          <div class="result-actions">
+            <button id="btn-retry" class="btn" type="button">RETRY</button>
+            <button id="btn-next" class="btn" type="button">NEXT</button>
+            <button id="btn-menu" class="btn ghost" type="button">MENU</button>
+          </div>
+        </div>
+
+        <!-- ===== Overlays ===== -->
+        <div id="pause-overlay" class="overlay">
+          <h1>PAUSED</h1>
+          <div class="start-hint">resume: <kbd>Esc</kbd></div>
+          <button id="pause-menu" class="btn ghost" type="button">MENU</button>
+        </div>
+
+        <div id="help-overlay" class="overlay">
+          <h1>HOW TO PLAY</h1>
+          <div class="help-body">
+            <p><strong>Sprint</strong> — 表示された実コードのスニペットを1文字ずつ正確に。正しい文字だけが進み、<kbd>Enter</kbd> で改行（先頭インデントは自動スキップ）。クリアで WPM・正確率・ランクと<strong>弱点分析</strong>。</p>
+            <p><strong>Falling Tokens</strong> — <code>=&gt;</code> や <code>.map(</code> などのトークンが落下。先頭文字を打つとロックオン、最後まで打って撃破。床に落とすとライフ減少、0 でゲームオーバー。</p>
+            <p><strong>Code Runner</strong> — コードの行を打ち続けてトンネルを疾走。正打で加速・ミスで減速し、ミスが続くと<strong>クラッシュ</strong>。走行距離がスコア。</p>
+            <p><kbd>Esc</kbd> ポーズ · <kbd>Tab</kbd> やり直し · <kbd>Backspace</kbd> 戻る · 画面下の <strong>🔊</strong> でミュート</p>
+          </div>
+          <button id="help-close" class="btn" type="button">CLOSE</button>
+        </div>
+
+        <div id="toast"></div>
+      </div>
+      <input id="key-sink" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true" tabindex="-1" />
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
