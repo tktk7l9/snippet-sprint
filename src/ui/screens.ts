@@ -6,7 +6,7 @@ import type { Category, Difficulty, Language } from "../engine/content/types.js"
 import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
 import type { MissEntry } from "../engine/stats.js";
-import type { ModeId, PlayConfig } from "../modes/types.js";
+import type { PlayConfig } from "../modes/types.js";
 import { byId } from "./dom.js";
 
 export type { PlayConfig };
@@ -50,14 +50,12 @@ export class Screens {
   private readonly pauseEl = byId("pause-overlay");
   private readonly helpEl = byId("help-overlay");
 
-  private mode: ModeId = "sprint";
   private readonly selectedLangs = new Set<Language>(LANGUAGE_ORDER);
   private difficulty: Difficulty | "mixed" = "mixed";
   private category: Category | "all" = "all";
 
   constructor(handlers: ScreenHandlers) {
     // Pills are pre-rendered in the HTML (avoids layout shift); bind handlers.
-    this.bindSingle("mode-pills", (id) => (this.mode = id as ModeId));
     this.bindSingle("cat-pills", (id) => (this.category = id as Category | "all"));
     this.bindSingle("diff-pills", (id) => (this.difficulty = id as Difficulty | "mixed"));
     this.bindLangs();
@@ -72,7 +70,6 @@ export class Screens {
 
   config(): PlayConfig {
     return {
-      mode: this.mode,
       languages: [...this.selectedLangs],
       difficulty: this.difficulty,
       category: this.category,

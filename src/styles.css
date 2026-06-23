@@ -126,37 +126,10 @@ kbd {
 #code-desc::before { content: "// "; color: rgba(124, 255, 178, 0.45); }
 #code-desc:empty { display: none; }
 
-/* ---------- mode views + arcade HUD ---------- */
+/* ---------- mode view ---------- */
 .mode-view { display: none; }
 .mode-view.show { display: block; }
-.mode-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 92px;
-  transform: translateX(-50%);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  color: var(--dim);
-  pointer-events: none;
-  white-space: nowrap;
-}
-#falling-lives, #crash { top: 16px; right: 16px; min-width: 132px; text-align: right; }
-#fall-lives { font-size: 22px; letter-spacing: 3px; color: var(--err); }
-#runner-stats, #falling-stats { top: 16px; left: 16px; min-width: 150px; }
-#crash-track {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 93, 115, 0.16);
-  overflow: hidden;
-  margin-top: 4px;
-}
-#crash-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--warn), var(--err));
-  box-shadow: 0 0 12px rgba(255,93,115,0.5);
-  transition: width 0.1s linear;
-}
+
 @keyframes shake {
   0%,100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
@@ -377,7 +350,7 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .codepre.shake { animation: none; }
   #toast { transition: opacity 0.2s ease-out; transform: translate(-50%, -50%); }
-  #progress-fill, #crash-fill { transition: none; }
+  #progress-fill { transition: none; }
 }
 
 @media (pointer: coarse), (max-width: 720px) {

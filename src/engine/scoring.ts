@@ -23,22 +23,6 @@ export function rankFor(wpm: number, accuracy: number): Rank {
   return "D";
 }
 
-export interface RankTiers {
-  readonly S: number;
-  readonly A: number;
-  readonly B: number;
-  readonly C: number;
-}
-
-/** Map a single score-like value onto S..D using per-mode thresholds. */
-export function rankByThresholds(value: number, tiers: RankTiers): Rank {
-  if (value >= tiers.S) return "S";
-  if (value >= tiers.A) return "A";
-  if (value >= tiers.B) return "B";
-  if (value >= tiers.C) return "C";
-  return "D";
-}
-
 export function computeScore(input: ScoreInput): ScoreResult {
   const base = Math.max(0, input.length) * 10;
   const speed = 1 + Math.max(0, input.wpm) / 60;

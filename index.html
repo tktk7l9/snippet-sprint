@@ -34,14 +34,6 @@
           <p class="start-sub">CODE TYPING TRAINER</p>
 
           <div class="setup-block">
-            <div class="setup-label">Mode</div>
-            <div id="mode-pills" class="pillgroup">
-              <button class="pill active" type="button" data-id="sprint">Sprint</button>
-              <button class="pill" type="button" data-id="falling">Falling</button>
-              <button class="pill" type="button" data-id="runner">Runner</button>
-            </div>
-          </div>
-          <div class="setup-block">
             <div class="setup-label">Languages</div>
             <div id="lang-pills" class="pillgroup">
               <button class="pill active" type="button" data-id="ts">TS/JS</button>
@@ -105,39 +97,6 @@
             </div>
             <div id="progress"><div id="progress-fill"></div></div>
           </div>
-
-          <!-- Falling Tokens -->
-          <div id="falling-view" class="mode-view">
-            <div id="falling-stats" class="panel">
-              <h2>Falling</h2>
-              <div class="stat-row"><span>Score</span><span id="fall-score">0</span></div>
-              <div class="stat-row"><span>Level</span><span id="fall-level">1</span></div>
-              <div class="stat-row"><span>Combo</span><span id="fall-combo">0</span></div>
-            </div>
-            <div id="falling-lives" class="panel">
-              <h2>Lives</h2>
-              <div id="fall-lives">♥♥♥</div>
-            </div>
-            <div class="mode-hint">落ちる前にタイプして撃破</div>
-          </div>
-
-          <!-- Code Runner -->
-          <div id="runner-view" class="mode-view">
-            <div id="runner-stats" class="panel">
-              <h2>Runner</h2>
-              <div class="stat-row"><span>Speed</span><span id="run-speed">0</span></div>
-              <div class="stat-row"><span>Dist</span><span id="run-dist">0m</span></div>
-              <div class="stat-row"><span>Combo</span><span id="run-combo">0</span></div>
-            </div>
-            <div id="crash" class="panel">
-              <h2>Crash</h2>
-              <div id="crash-track"><div id="crash-fill"></div></div>
-            </div>
-            <div id="runner-line-wrap">
-              <pre id="runner-line" class="codepre"></pre>
-            </div>
-            <div class="mode-hint">正しく打って加速 · ミスで減速</div>
-          </div>
         </div>
 
         <!-- ===== Results ===== -->
@@ -168,9 +127,8 @@
         <div id="help-overlay" class="overlay">
           <h1>HOW TO PLAY</h1>
           <div class="help-body">
-            <p><strong>Sprint</strong> — 表示された実コードのスニペットを1文字ずつ正確に。正しい文字だけが進み、<kbd>Enter</kbd> で改行（先頭インデントは自動スキップ）。クリアで WPM・正確率・ランクと<strong>弱点分析</strong>。</p>
-            <p><strong>Falling Tokens</strong> — <code>=&gt;</code> や <code>.map(</code> などのトークンが落下。先頭文字を打つとロックオン、最後まで打って撃破。床に落とすとライフ減少、0 でゲームオーバー。</p>
-            <p><strong>Code Runner</strong> — コードの行を打ち続けてトンネルを疾走。正打で加速・ミスで減速し、ミスが続くと<strong>クラッシュ</strong>。走行距離がスコア。</p>
+            <p>表示された<strong>実コードのスニペット</strong>を左から1文字ずつ正確に入力します。正しい文字だけが進み（誤打は赤く光りミスとして記録）、<kbd>Enter</kbd> で改行（次行の先頭インデントは自動スキップ）。<kbd>Backspace</kbd> で1文字戻れます。</p>
+            <p>言語（TS/JS・Python・Go・Rust・Java・C++・SQL）・カテゴリ（Basics〜Algorithms）・難易度を選んで挑戦。クリアすると <strong>WPM・正確率・スコア・ランク（S〜D）</strong>と、どの記号でつまずいたかの<strong>弱点分析</strong>が出ます。</p>
             <p><kbd>Esc</kbd> ポーズ · <kbd>Tab</kbd> やり直し · <kbd>Backspace</kbd> 戻る · 画面下の <strong>🔊</strong> でミュート</p>
           </div>
           <button id="help-close" class="btn" type="button">CLOSE</button>

@@ -1,5 +1,5 @@
-// Shared contracts for the three game modes. main.ts owns the shared services
-// (renderer, effects, audio, stats, results) and drives the active mode.
+// Shared contracts for a game mode. main.ts owns the shared services (renderer,
+// effects, audio, stats, results) and drives the active mode.
 
 import type { AudioEngine } from "../audio/audio.js";
 import type { Category, Difficulty, Language } from "../engine/content/types.js";
@@ -9,18 +9,9 @@ import type { EffectsLayer } from "../render/effects.js";
 import type { RenderContext } from "../render/renderer.js";
 import type { StageSignals } from "../render/stage.js";
 
-export type ModeId = "sprint" | "falling" | "runner";
-
-export const MODE_ORDER: readonly ModeId[] = ["sprint", "falling", "runner"];
-
-export const MODE_LABELS: Record<ModeId, string> = {
-  sprint: "Sprint",
-  falling: "Falling",
-  runner: "Runner",
-};
+export type ModeId = "sprint";
 
 export interface PlayConfig {
-  mode: ModeId;
   languages: Language[];
   difficulty: Difficulty | "mixed";
   category: Category | "all";

@@ -13,9 +13,7 @@ import { StatsTracker } from "./engine/stats.js";
 import type { Rank } from "./engine/scoring.js";
 import { bestFor, saveResult, type RecordStore } from "./engine/records.js";
 import { SprintMode } from "./modes/sprint.js";
-import { FallingMode } from "./modes/falling.js";
-import { RunnerMode } from "./modes/runner.js";
-import type { GameMode, ModeId, ModeServices, PlayConfig } from "./modes/types.js";
+import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
 import type { Screens } from "./ui/screens.js";
 
 export interface GameController {
@@ -82,11 +80,7 @@ export function createGame(screens: Screens): GameController {
     toast,
   };
 
-  const modes: Record<ModeId, GameMode> = {
-    sprint: new SprintMode(services),
-    falling: new FallingMode(services),
-    runner: new RunnerMode(services),
-  };
+  const sprint: GameMode = new SprintMode(services);
 
   setMuted(!audio.enabled);
 
@@ -95,7 +89,7 @@ export function createGame(screens: Screens): GameController {
     audio.resume();
     stats = new StatsTracker();
     active?.end();
-    active = modes[cfg.mode];
+    active = sprint;
     screens.hideAll();
     playHud.classList.add("show");
     active.begin(cfg);

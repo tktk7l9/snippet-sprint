@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeScore, rankByThresholds, rankFor } from "./scoring.js";
+import { computeScore, rankFor } from "./scoring.js";
 
 describe("rankFor", () => {
   it("maps speed + accuracy onto S..D", () => {
@@ -10,17 +10,6 @@ describe("rankFor", () => {
     expect(rankFor(10, 0.7)).toBe("D");
     // fast but sloppy drops below S
     expect(rankFor(90, 0.9)).toBe("B");
-  });
-});
-
-describe("rankByThresholds", () => {
-  const tiers = { S: 1000, A: 600, B: 300, C: 100 };
-  it("maps a value onto S..D by threshold", () => {
-    expect(rankByThresholds(1200, tiers)).toBe("S");
-    expect(rankByThresholds(700, tiers)).toBe("A");
-    expect(rankByThresholds(400, tiers)).toBe("B");
-    expect(rankByThresholds(150, tiers)).toBe("C");
-    expect(rankByThresholds(50, tiers)).toBe("D");
   });
 });
 
