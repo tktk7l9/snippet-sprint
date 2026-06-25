@@ -6,6 +6,12 @@ import { Screens } from "./ui/screens.js";
 import type { GameController } from "./game.js";
 import type { PlayConfig } from "./modes/types.js";
 
+// Vercel Web Analytics — production only. Script + beacon are same-origin
+// (/_vercel/insights/*), so the strict CSP (script-src/connect-src 'self') is unaffected.
+if (import.meta.env.PROD) {
+  void import("@vercel/analytics").then(({ inject }) => inject());
+}
+
 let game: GameController | null = null;
 let loading: Promise<GameController> | null = null;
 
