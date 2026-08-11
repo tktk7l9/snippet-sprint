@@ -1,6 +1,6 @@
 # Snippet Sprint — Code Typing Trainer
 
-**[▶ Play Now](https://snippet-sprint.vercel.app)**
+**[▶ Play Now](https://snippet-sprint.saitotakuya0719.workers.dev)**
 
 表示された実コードのスニペットを1問ずつ正確に打って、プログラミングのタイピング（記号・camelCase・インデント・実コードの流れ）を上達させるための Three.js 製タイピングゲーム。コード文字は鮮明な DOM、その背後で WebGL のネオンステージ（パーティクル / ブルーム / コンボ閃光 / ミス時シェイク）が入力にリアルタイムで反応する。
 
@@ -63,3 +63,14 @@ npm run build       # 型チェック + 本番ビルド
 - Vitest
 
 > `public/ogp.png` は `scratchpad/ogp.svg`（リポジトリ外）から macOS の `qlmanage` + `sips` で生成。差し替える場合は 1200×630 の PNG を置き換えてください。
+
+## ホスティング
+
+本番は **Cloudflare Workers (static assets)**: https://snippet-sprint.saitotakuya0719.workers.dev
+
+2026-08-11、Vercel 無料枠の超過でアカウントが停止（全プロジェクトが
+`402 DEPLOYMENT_DISABLED`）したため移行した。ビルド成果物は純粋な静的
+ファイルなので Worker スクリプトは無く、`wrangler.jsonc` の `assets` だけで
+配信している。セキュリティヘッダーは `public/_headers`（`vercel.json` の
+`headers` を移植したもの）。`npm run deploy` で build + wrangler deploy。
+Vercel 側の設定も残置してあるので、復旧すれば両方に出せる。

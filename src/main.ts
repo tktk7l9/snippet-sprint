@@ -7,8 +7,10 @@ import type { GameController } from "./game.js";
 import type { PlayConfig } from "./modes/types.js";
 
 // Vercel Web Analytics — production only. Script + beacon are same-origin
-// (/_vercel/insights/*), so the strict CSP (script-src/connect-src 'self') is unaffected.
-if (import.meta.env.PROD) {
+// (/_vercel/insights/*), so the strict CSP (script-src/connect-src 'self') is
+// unaffected. Skipped off Vercel: the Cloudflare Worker has no such endpoint,
+// so injecting there would only 404 on every load.
+if (import.meta.env.PROD && location.hostname.endsWith(".vercel.app")) {
   void import("@vercel/analytics").then(({ inject }) => inject());
 }
 
