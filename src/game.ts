@@ -15,6 +15,7 @@ import { bestFor, saveResult, type RecordStore } from "./engine/records.js";
 import { SprintMode } from "./modes/sprint.js";
 import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
 import type { Screens } from "./ui/screens.js";
+import { safeStore } from "./storage.js";
 
 export interface GameController {
   start(config: PlayConfig): void;
@@ -27,22 +28,7 @@ type AppState = "menu" | "playing" | "paused" | "results";
 
 const IDLE: StageSignals = { progress: 0, combo: 0, accuracy: 1, active: false };
 
-const store: RecordStore = {
-  getItem(k) {
-    try {
-      return localStorage.getItem(k);
-    } catch {
-      return null;
-    }
-  },
-  setItem(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch {
-      /* ignore quota / disabled storage */
-    }
-  },
-};
+const store: RecordStore = safeStore;
 
 export function createGame(screens: Screens): GameController {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

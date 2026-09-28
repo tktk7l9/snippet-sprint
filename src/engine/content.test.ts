@@ -23,6 +23,11 @@ describe("content", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it("never ends with whitespace (the final keystroke must not be a Space or Enter)", () => {
+    // The results screen focuses NEXT; a trailing Space would activate it on keyup.
+    for (const s of SNIPPETS) expect(/\s$/.test(s.code), s.id).toBe(false);
+  });
+
   it("uses normalized, non-empty code", () => {
     for (const s of SNIPPETS) {
       expect(s.code.length, s.id).toBeGreaterThan(0);

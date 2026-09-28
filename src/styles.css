@@ -239,6 +239,16 @@ kbd {
   transition: background 0.1s ease;
 }
 .pill:hover { background: rgba(92,242,255,0.12); }
+.pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.pill:disabled:hover { background: rgba(10,14,32,0.6); }
+/* Multi-select languages carry a check mark, so selection does not rely on color
+   and reads differently from the single-select groups (SHIG 96, 48). */
+.lang-groups .pill.active::before { content: "✓ "; }
+.setup-note { letter-spacing: 0.08em; text-transform: none; color: var(--dim); margin-left: 6px; }
 .pill.active {
   background: rgba(92,242,255,0.22);
   border-color: var(--accent);
@@ -255,6 +265,8 @@ kbd {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* "safe" keeps the top reachable when content is taller than the screen (SHIG 85, 52). */
+  justify-content: safe center;
   gap: 22px;
   padding: 24px;
   overflow-y: auto;

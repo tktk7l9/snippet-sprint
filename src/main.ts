@@ -41,7 +41,17 @@ async function boot(cfg: PlayConfig): Promise<void> {
 // Warm the game chunk on the first user interaction so START is instant — but
 // not during an idle cold load, which keeps the initial bundle light for
 // Lighthouse (the Three.js chunk only loads once the user actually engages).
-const warm = (): void => void ensureGame();
+const warm = (): void => {
+  void ensureGame();
+  // Filter feasibility needs the snippet data, so it rides along with the game
+  // chunk's warm-up instead of bloating the initial bundle.
+  void import("./engine/availability.js").then((m) =>
+    screens.setAvailability({
+      categories: (langs) => m.availableCategories(langs),
+      difficulties: (langs, cat) => m.availableDifficulties(langs, cat),
+    }),
+  );
+};
 window.addEventListener("pointerdown", warm, { once: true });
 window.addEventListener("keydown", warm, { once: true });
 
