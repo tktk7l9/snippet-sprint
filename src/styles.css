@@ -178,11 +178,15 @@ kbd {
 .status-pill.on { color: var(--accent); border: 1px solid rgba(92,242,255,0.5); }
 .status-pill.off { color: var(--dim); border: 1px solid rgba(108,115,144,0.4); }
 
-#help-fab {
+#play-controls {
   position: absolute;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+.fab {
   background: rgba(10,14,32,0.7);
   border: 1px solid rgba(92, 242, 255, 0.35);
   color: var(--accent);
@@ -194,7 +198,7 @@ kbd {
   pointer-events: auto;
   backdrop-filter: blur(6px);
 }
-#help-fab:hover { background: rgba(92,242,255,0.15); }
+.fab:hover { background: rgba(92,242,255,0.15); }
 
 /* ---------- Buttons / pills ---------- */
 .btn {
@@ -377,10 +381,20 @@ kbd {
   #progress-fill { transition: none; }
 }
 
+/* 7mm-ish touch targets (SHIG 78). */
+@media (pointer: coarse) {
+  .pill, .fab, .status-pill { min-height: 40px; }
+  .status-pill { padding: 3px 14px; }
+  #start-screen .start-hint { display: none; }
+}
+
 @media (pointer: coarse), (max-width: 720px) {
   #mobile-hint { display: block; }
   #panel-stats, #panel-meta { padding: 8px 10px; min-width: 0; font-size: 12px; }
   #panel-meta .meta-lang { font-size: 16px; }
-  #help-fab { top: 10px; }
+  #play-controls { top: 10px; }
+  /* Narrow screens: icon-only controls so they fit between the two panels. */
+  .fab { min-width: 40px; padding: 6px 10px; letter-spacing: 0; }
+  .fab .fab-text { display: none; }
   #progress { bottom: 80px; }
 }

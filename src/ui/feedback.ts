@@ -16,11 +16,17 @@ export function toast(text: string): void {
 
 export function setMuted(muted: boolean): void {
   const bar = byId("status-bar");
-  bar.innerHTML = "";
-  const pill = document.createElement("div");
+  // A real button, updated in place so keyboard focus survives a toggle (SHIG 4, 37, 94).
+  let pill = bar.querySelector<HTMLButtonElement>("button.status-pill");
+  if (!pill) {
+    pill = document.createElement("button");
+    pill.type = "button";
+    pill.setAttribute("aria-label", "効果音");
+    bar.appendChild(pill);
+  }
   pill.className = `status-pill ${muted ? "off" : "on"}`;
   pill.textContent = muted ? "🔇 MUTED" : "🔊 SOUND";
-  bar.appendChild(pill);
+  pill.setAttribute("aria-pressed", String(!muted));
 }
 
 export function shakeEl(el: HTMLElement): void {

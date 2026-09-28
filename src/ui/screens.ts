@@ -133,6 +133,7 @@ export class Screens {
   }
   showPause(): void {
     this.pauseEl.classList.add("show");
+    byId("pause-resume").focus({ preventScroll: true });
   }
   hidePause(): void {
     this.pauseEl.classList.remove("show");

@@ -164,7 +164,9 @@ export function createGame(screens: Screens): GameController {
   });
   if (isTouchDevice()) {
     attachMobileInput(sink, { onChar: routeChar, onBackspace: routeBackspace });
-    byId("app").addEventListener("pointerdown", () => {
+    byId("app").addEventListener("pointerdown", (e) => {
+      // Taps on on-screen controls (PAUSE / HELP / sound) should not pop the keyboard.
+      if ((e.target as Element | null)?.closest("button")) return;
       if (state === "playing") focusSink(sink);
     });
   }
@@ -174,6 +176,10 @@ export function createGame(screens: Screens): GameController {
     else screens.showHelp();
   });
   byId("help-close").addEventListener("click", () => unsuspend());
+  // On-screen escape hatch for touch players, who have no Esc key (SHIG 60, 82).
+  byId("pause-fab").addEventListener("click", () => suspend("pause"));
+  byId("pause-resume").addEventListener("click", () => unsuspend());
+  byId("pause-retry").addEventListener("click", () => onRestart());
   byId("status-bar").addEventListener("click", () => {
     setMuted(!audio.toggle());
   });
