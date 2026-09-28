@@ -182,6 +182,9 @@ export function createGame(screens: Screens): GameController {
   byId("pause-retry").addEventListener("click", () => onRestart());
   byId("status-bar").addEventListener("click", () => {
     setMuted(!audio.toggle());
+    // Tapping the toggle moved focus to it and closed the soft keyboard; bring
+    // it back so a touch player can keep typing without another tap.
+    if (state === "playing" && isTouchDevice()) focusSink(sink);
   });
   window.addEventListener("resize", () => ctx.resize());
 

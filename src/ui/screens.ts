@@ -6,6 +6,7 @@ import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
 import type { MissEntry } from "../engine/stats.js";
 import type { PlayConfig } from "../modes/types.js";
+import { isStrayKeyActivation } from "../engine/activation.js";
 import { loadPrefs, savePrefs } from "../engine/prefs.js";
 import { safeStore } from "../storage.js";
 import { byId } from "./dom.js";
@@ -76,6 +77,7 @@ export class Screens {
   private difficulty: Difficulty | "mixed";
   private category: Category | "all";
   private availability: Availability | null = null;
+  private resultsShownAt = 0;
 
   constructor(handlers: ScreenHandlers) {
     // Restore the last selection so returning players start where they left off (SHIG 42).
@@ -90,10 +92,29 @@ export class Screens {
     this.bindLangs();
     this.syncPills();
 
-    byId("start-btn").addEventListener("click", () => handlers.onStart(this.config()));
-    byId("btn-retry").addEventListener("click", () => handlers.onRetry());
-    byId("btn-next").addEventListener("click", () => handlers.onNext());
-    byId("btn-menu").addEventListener("click", () => handlers.onMenu());
+    this.startBtn.addEventListener("click", () => handlers.onStart(this.config()));
+    // The hint promises "Enter to start"; keep that true after a click on the
+    // background has moved focus off START (SHIG 22, 47).
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!this.startEl.classList.contains("show") || this.isHelpOpen()) return;
+      const focused = document.activeElement;
+      if (focused && focused !== document.body) return;
+      e.preventDefault();
+      // The game's own keydown listener runs after this one; without this it
+      // would see the same Enter as the first typed character once play starts.
+      e.stopImmediatePropagation();
+      handlers.onStart(this.config());
+    });
+    const resultAction = (id: string, run: () => void): void => {
+      byId(id).addEventListener("click", (e) => {
+        if (isStrayKeyActivation(e.detail, this.resultsShownAt, performance.now())) return;
+        run();
+      });
+    };
+    resultAction("btn-retry", () => handlers.onRetry());
+    resultAction("btn-next", () => handlers.onNext());
+    resultAction("btn-menu", () => handlers.onMenu());
     byId("pause-menu").addEventListener("click", () => handlers.onMenu());
     byId("help-close").addEventListener("click", () => this.hideHelp());
   }
@@ -126,6 +147,7 @@ export class Screens {
     this.hideAll();
     this.populateResults(data);
     this.resultsEl.classList.add("show");
+    this.resultsShownAt = performance.now();
     byId("btn-next").focus({ preventScroll: true });
   }
   hideResults(): void {

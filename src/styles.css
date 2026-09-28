@@ -113,7 +113,8 @@ kbd {
   border-radius: 3px;
 }
 .codepre .ch.ret { opacity: 0.4; }
-.codepre.shake { animation: shake 0.16s linear; }
+.codepre.shake,
+.pill.shake { animation: shake 0.16s linear; }
 #code-desc {
   margin-top: 14px;
   text-align: center;
@@ -376,7 +377,7 @@ kbd {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .codepre.shake { animation: none; }
+  .codepre.shake, .pill.shake { animation: none; }
   #toast { transition: opacity 0.2s ease-out; transform: translate(-50%, -50%); }
   #progress-fill { transition: none; }
 }
@@ -397,4 +398,10 @@ kbd {
   .fab { min-width: 40px; padding: 6px 10px; letter-spacing: 0; }
   .fab .fab-text { display: none; }
   #progress { bottom: 80px; }
+}
+
+/* Phone widths: stack the controls so they stay clear of the Stats and Snippet
+   panels on either side (they overlapped the Snippet panel at 375px). */
+@media (max-width: 420px) {
+  #play-controls { flex-direction: column; }
 }
