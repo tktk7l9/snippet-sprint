@@ -11,6 +11,8 @@ export interface SelectOptions {
   readonly category: Category | "all";
   /** Avoid returning this id when alternatives exist. */
   readonly excludeId?: string;
+  /** Replay this exact snippet (RETRY). Ignored if the id is not in the pool. */
+  readonly replayId?: string;
   /** Injectable RNG for deterministic tests. Defaults to Math.random. */
   readonly rng?: () => number;
 }
@@ -20,6 +22,11 @@ export function selectSnippet(
   pool: Snippet[] = SNIPPETS,
 ): Snippet {
   const rng = opts.rng ?? Math.random;
+
+  if (opts.replayId) {
+    const replay = pool.find((s) => s.id === opts.replayId);
+    if (replay) return replay;
+  }
 
   let candidates = pool.filter((s) => opts.languages.includes(s.language));
   if (candidates.length === 0) candidates = pool.slice();

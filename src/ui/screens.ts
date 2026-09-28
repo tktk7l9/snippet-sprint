@@ -6,7 +6,11 @@ import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
 import type { MissEntry } from "../engine/stats.js";
 import type { PlayConfig } from "../modes/types.js";
+import { isStrayKeyActivation } from "../engine/activation.js";
+import { loadPrefs, savePrefs } from "../engine/prefs.js";
+import { safeStore } from "../storage.js";
 import { byId } from "./dom.js";
+import { shakeEl } from "./feedback.js";
 
 export type { PlayConfig };
 
@@ -19,6 +23,12 @@ export interface ResultData {
   misses: MissEntry[];
   best: BestRecord | null;
   improved: boolean;
+}
+
+/** Filter feasibility, injected lazily so the snippet data stays out of the initial bundle. */
+export interface Availability {
+  categories(languages: readonly Language[]): Set<Category>;
+  difficulties(languages: readonly Language[], category: Category | "all"): Set<Difficulty>;
 }
 
 export interface ScreenHandlers {
@@ -43,26 +53,68 @@ function charLabel(ch: string): string {
   return ch;
 }
 
+function pills(containerId: string): HTMLButtonElement[] {
+  return [...byId(containerId).querySelectorAll<HTMLButtonElement>(".pill")];
+}
+
+function setPressed(btn: HTMLButtonElement, on: boolean): void {
+  btn.classList.toggle("active", on);
+  btn.setAttribute("aria-pressed", String(on));
+}
+
 export class Screens {
   private readonly startEl = byId("start-screen");
   private readonly resultsEl = byId("results");
   private readonly pauseEl = byId("pause-overlay");
   private readonly helpEl = byId("help-overlay");
 
-  private readonly selectedLangs = new Set<Language>(["ts"]);
-  private difficulty: Difficulty | "mixed" = "mixed";
-  private category: Category | "all" = "all";
+  private readonly startBtn = byId<HTMLButtonElement>("start-btn");
+  private readonly langBtns = pills("lang-pills");
+  private readonly catBtns = pills("cat-pills");
+  private readonly diffBtns = pills("diff-pills");
+
+  private readonly selectedLangs: Set<Language>;
+  private difficulty: Difficulty | "mixed";
+  private category: Category | "all";
+  private availability: Availability | null = null;
+  private resultsShownAt = 0;
 
   constructor(handlers: ScreenHandlers) {
-    // Pills are pre-rendered in the HTML (avoids layout shift); bind handlers.
-    this.bindSingle("cat-pills", (id) => (this.category = id as Category | "all"));
-    this.bindSingle("diff-pills", (id) => (this.difficulty = id as Difficulty | "mixed"));
-    this.bindLangs();
+    // Restore the last selection so returning players start where they left off (SHIG 42).
+    const prefs = loadPrefs(safeStore);
+    this.selectedLangs = new Set(prefs.languages);
+    this.category = prefs.category;
+    this.difficulty = prefs.difficulty;
 
-    byId("start-btn").addEventListener("click", () => handlers.onStart(this.config()));
-    byId("btn-retry").addEventListener("click", () => handlers.onRetry());
-    byId("btn-next").addEventListener("click", () => handlers.onNext());
-    byId("btn-menu").addEventListener("click", () => handlers.onMenu());
+    // Pills are pre-rendered in the HTML (avoids layout shift); bind handlers.
+    this.bindSingle(this.catBtns, (id) => (this.category = id as Category | "all"));
+    this.bindSingle(this.diffBtns, (id) => (this.difficulty = id as Difficulty | "mixed"));
+    this.bindLangs();
+    this.syncPills();
+
+    this.startBtn.addEventListener("click", () => handlers.onStart(this.config()));
+    // The hint promises "Enter to start"; keep that true after a click on the
+    // background has moved focus off START (SHIG 22, 47).
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!this.startEl.classList.contains("show") || this.isHelpOpen()) return;
+      const focused = document.activeElement;
+      if (focused && focused !== document.body) return;
+      e.preventDefault();
+      // The game's own keydown listener runs after this one; without this it
+      // would see the same Enter as the first typed character once play starts.
+      e.stopImmediatePropagation();
+      handlers.onStart(this.config());
+    });
+    const resultAction = (id: string, run: () => void): void => {
+      byId(id).addEventListener("click", (e) => {
+        if (isStrayKeyActivation(e.detail, this.resultsShownAt, performance.now())) return;
+        run();
+      });
+    };
+    resultAction("btn-retry", () => handlers.onRetry());
+    resultAction("btn-next", () => handlers.onNext());
+    resultAction("btn-menu", () => handlers.onMenu());
     byId("pause-menu").addEventListener("click", () => handlers.onMenu());
     byId("help-close").addEventListener("click", () => this.hideHelp());
   }
@@ -75,10 +127,18 @@ export class Screens {
     };
   }
 
+  /** Enable feasibility checks once the snippet data has loaded. */
+  setAvailability(availability: Availability): void {
+    this.availability = availability;
+    this.syncPills();
+  }
+
   // ---- visibility ----
   showStart(): void {
     this.hideAll();
     this.startEl.classList.add("show");
+    // Enter starts right away for keyboard players (SHIG 22, 47).
+    this.startBtn.focus({ preventScroll: true });
   }
   hideStart(): void {
     this.startEl.classList.remove("show");
@@ -87,12 +147,15 @@ export class Screens {
     this.hideAll();
     this.populateResults(data);
     this.resultsEl.classList.add("show");
+    this.resultsShownAt = performance.now();
+    byId("btn-next").focus({ preventScroll: true });
   }
   hideResults(): void {
     this.resultsEl.classList.remove("show");
   }
   showPause(): void {
     this.pauseEl.classList.add("show");
+    byId("pause-resume").focus({ preventScroll: true });
   }
   hidePause(): void {
     this.pauseEl.classList.remove("show");
@@ -118,32 +181,74 @@ export class Screens {
 
   // ---- start screen pills (bind to pre-rendered buttons) ----
   /** Single-select group: clicking activates one button and reports its data-id. */
-  private bindSingle(containerId: string, onPick: (id: string) => void): void {
-    const btns = [...byId(containerId).querySelectorAll<HTMLButtonElement>(".pill")];
+  private bindSingle(btns: HTMLButtonElement[], onPick: (id: string) => void): void {
     for (const btn of btns) {
-      btn.addEventListener("click", () => {
-        for (const b of btns) b.classList.remove("active");
-        btn.classList.add("active");
+      btn.addEventListener("click", (e) => {
         onPick(btn.dataset.id ?? "");
+        this.changed(e);
       });
     }
   }
 
   /** Multi-select languages: toggle, but keep at least one active. */
   private bindLangs(): void {
-    const btns = [...byId("lang-pills").querySelectorAll<HTMLButtonElement>(".pill")];
-    for (const btn of btns) {
+    for (const btn of this.langBtns) {
       const id = (btn.dataset.id ?? "") as Language;
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
         if (this.selectedLangs.has(id)) {
-          if (this.selectedLangs.size === 1) return; // keep at least one
+          if (this.selectedLangs.size === 1) {
+            // Show why nothing happened, right where the user tapped (SHIG 66).
+            shakeEl(btn);
+            this.refocusStart(e);
+            return;
+          }
           this.selectedLangs.delete(id);
-          btn.classList.remove("active");
         } else {
           this.selectedLangs.add(id);
-          btn.classList.add("active");
         }
+        this.changed(e);
       });
+    }
+  }
+
+  private changed(e: MouseEvent): void {
+    this.syncPills();
+    savePrefs(safeStore, this.config());
+    this.refocusStart(e);
+  }
+
+  /**
+   * After a pointer pick, hand focus back to START so Enter plays; keyboard
+   * users (detail === 0) keep their place in the tab order.
+   */
+  private refocusStart(e: MouseEvent): void {
+    if (e.detail > 0) this.startBtn.focus({ preventScroll: true });
+  }
+
+  /**
+   * Reflect the selection on every pill (class + aria-pressed, SHIG 96) and
+   * disable filters that have no snippet for the chosen languages (SHIG 13, 32).
+   * A selection that became impossible falls back to All / Mixed.
+   */
+  private syncPills(): void {
+    const langs = [...this.selectedLangs];
+    const cats = this.availability?.categories(langs);
+    if (cats && this.category !== "all" && !cats.has(this.category)) this.category = "all";
+    const diffs = this.availability?.difficulties(langs, this.category);
+    if (diffs && this.difficulty !== "mixed" && !diffs.has(this.difficulty)) this.difficulty = "mixed";
+
+    for (const btn of this.langBtns) {
+      setPressed(btn, this.selectedLangs.has(btn.dataset.id as Language));
+    }
+    for (const btn of this.catBtns) {
+      const id = btn.dataset.id as Category | "all";
+      setPressed(btn, id === this.category);
+      btn.disabled = !!cats && id !== "all" && !cats.has(id);
+    }
+    for (const btn of this.diffBtns) {
+      const id = btn.dataset.id as Difficulty | "mixed";
+      setPressed(btn, id === this.difficulty);
+      btn.disabled = !!diffs && id !== "mixed" && !diffs.has(id);
     }
   }
 

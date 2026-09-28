@@ -15,6 +15,7 @@ import { bestFor, saveResult, type RecordStore } from "./engine/records.js";
 import { SprintMode } from "./modes/sprint.js";
 import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
 import type { Screens } from "./ui/screens.js";
+import { safeStore } from "./storage.js";
 
 export interface GameController {
   start(config: PlayConfig): void;
@@ -27,22 +28,7 @@ type AppState = "menu" | "playing" | "paused" | "results";
 
 const IDLE: StageSignals = { progress: 0, combo: 0, accuracy: 1, active: false };
 
-const store: RecordStore = {
-  getItem(k) {
-    try {
-      return localStorage.getItem(k);
-    } catch {
-      return null;
-    }
-  },
-  setItem(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch {
-      /* ignore quota / disabled storage */
-    }
-  },
-};
+const store: RecordStore = safeStore;
 
 export function createGame(screens: Screens): GameController {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -83,7 +69,7 @@ export function createGame(screens: Screens): GameController {
 
   setMuted(!audio.enabled);
 
-  function startRun(cfg: PlayConfig): void {
+  function startRun(cfg: PlayConfig, replay = false): void {
     config = cfg;
     audio.resume();
     stats = new StatsTracker();
@@ -91,7 +77,7 @@ export function createGame(screens: Screens): GameController {
     active = sprint;
     screens.hideAll();
     playHud.classList.add("show");
-    active.begin(cfg);
+    active.begin(cfg, replay);
     state = "playing";
     if (isTouchDevice()) focusSink(sink);
   }
@@ -164,7 +150,7 @@ export function createGame(screens: Screens): GameController {
     if ((state === "playing" || state === "paused") && config) {
       screens.hidePause();
       screens.hideHelp();
-      startRun(config);
+      startRun(config, true);
     }
   }
 
@@ -178,7 +164,9 @@ export function createGame(screens: Screens): GameController {
   });
   if (isTouchDevice()) {
     attachMobileInput(sink, { onChar: routeChar, onBackspace: routeBackspace });
-    byId("app").addEventListener("pointerdown", () => {
+    byId("app").addEventListener("pointerdown", (e) => {
+      // Taps on on-screen controls (PAUSE / HELP / sound) should not pop the keyboard.
+      if ((e.target as Element | null)?.closest("button")) return;
       if (state === "playing") focusSink(sink);
     });
   }
@@ -188,8 +176,15 @@ export function createGame(screens: Screens): GameController {
     else screens.showHelp();
   });
   byId("help-close").addEventListener("click", () => unsuspend());
+  // On-screen escape hatch for touch players, who have no Esc key (SHIG 60, 82).
+  byId("pause-fab").addEventListener("click", () => suspend("pause"));
+  byId("pause-resume").addEventListener("click", () => unsuspend());
+  byId("pause-retry").addEventListener("click", () => onRestart());
   byId("status-bar").addEventListener("click", () => {
     setMuted(!audio.toggle());
+    // Tapping the toggle moved focus to it and closed the soft keyboard; bring
+    // it back so a touch player can keep typing without another tap.
+    if (state === "playing" && isTouchDevice()) focusSink(sink);
   });
   window.addEventListener("resize", () => ctx.resize());
 
@@ -219,8 +214,9 @@ export function createGame(screens: Screens): GameController {
 
   return {
     start: (cfg) => startRun(cfg),
+    // RETRY replays the same snippet; NEXT draws a different one (SHIG 37).
     retry: () => {
-      if (config) startRun(config);
+      if (config) startRun(config, true);
     },
     next: () => {
       if (config) startRun(config);

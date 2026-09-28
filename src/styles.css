@@ -113,7 +113,8 @@ kbd {
   border-radius: 3px;
 }
 .codepre .ch.ret { opacity: 0.4; }
-.codepre.shake { animation: shake 0.16s linear; }
+.codepre.shake,
+.pill.shake { animation: shake 0.16s linear; }
 #code-desc {
   margin-top: 14px;
   text-align: center;
@@ -178,11 +179,15 @@ kbd {
 .status-pill.on { color: var(--accent); border: 1px solid rgba(92,242,255,0.5); }
 .status-pill.off { color: var(--dim); border: 1px solid rgba(108,115,144,0.4); }
 
-#help-fab {
+#play-controls {
   position: absolute;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+.fab {
   background: rgba(10,14,32,0.7);
   border: 1px solid rgba(92, 242, 255, 0.35);
   color: var(--accent);
@@ -194,7 +199,7 @@ kbd {
   pointer-events: auto;
   backdrop-filter: blur(6px);
 }
-#help-fab:hover { background: rgba(92,242,255,0.15); }
+.fab:hover { background: rgba(92,242,255,0.15); }
 
 /* ---------- Buttons / pills ---------- */
 .btn {
@@ -239,6 +244,16 @@ kbd {
   transition: background 0.1s ease;
 }
 .pill:hover { background: rgba(92,242,255,0.12); }
+.pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.pill:disabled:hover { background: rgba(10,14,32,0.6); }
+/* Multi-select languages carry a check mark, so selection does not rely on color
+   and reads differently from the single-select groups (SHIG 96, 48). */
+.lang-groups .pill.active::before { content: "✓ "; }
+.setup-note { letter-spacing: 0.08em; text-transform: none; color: var(--dim); margin-left: 6px; }
 .pill.active {
   background: rgba(92,242,255,0.22);
   border-color: var(--accent);
@@ -255,6 +270,8 @@ kbd {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* "safe" keeps the top reachable when content is taller than the screen (SHIG 85, 52). */
+  justify-content: safe center;
   gap: 22px;
   padding: 24px;
   overflow-y: auto;
@@ -360,15 +377,31 @@ kbd {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .codepre.shake { animation: none; }
+  .codepre.shake, .pill.shake { animation: none; }
   #toast { transition: opacity 0.2s ease-out; transform: translate(-50%, -50%); }
   #progress-fill { transition: none; }
+}
+
+/* 7mm-ish touch targets (SHIG 78). */
+@media (pointer: coarse) {
+  .pill, .fab, .status-pill { min-height: 40px; }
+  .status-pill { padding: 3px 14px; }
+  #start-screen .start-hint { display: none; }
 }
 
 @media (pointer: coarse), (max-width: 720px) {
   #mobile-hint { display: block; }
   #panel-stats, #panel-meta { padding: 8px 10px; min-width: 0; font-size: 12px; }
   #panel-meta .meta-lang { font-size: 16px; }
-  #help-fab { top: 10px; }
+  #play-controls { top: 10px; }
+  /* Narrow screens: icon-only controls so they fit between the two panels. */
+  .fab { min-width: 40px; padding: 6px 10px; letter-spacing: 0; }
+  .fab .fab-text { display: none; }
   #progress { bottom: 80px; }
+}
+
+/* Phone widths: stack the controls so they stay clear of the Stats and Snippet
+   panels on either side (they overlapped the Snippet panel at 375px). */
+@media (max-width: 420px) {
+  #play-controls { flex-direction: column; }
 }
