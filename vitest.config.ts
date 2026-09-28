@@ -10,7 +10,7 @@ export default defineConfig({
       include: ["src/engine/**/*.ts"],
       exclude: ["src/**/*.test.ts"],
       reporter: ["text", "json-summary", "html"],
-      // 純ロジック層は 100% を維持する（既存アプリの lib-100% 方針に準拠）
+      // Keep the pure logic layer at 100% (following the existing apps' lib-100% policy)
       thresholds: {
         "src/engine/**/*.ts": {
           statements: 100,
