@@ -16,12 +16,13 @@ export class SprintMode implements GameMode {
 
   constructor(private readonly services: ModeServices) {}
 
-  begin(config: PlayConfig): void {
+  begin(config: PlayConfig, replay = false): void {
     const next = selectSnippet({
       languages: config.languages,
       difficulty: config.difficulty,
       category: config.category,
       excludeId: this.current?.id,
+      replayId: replay ? this.current?.id : undefined,
     });
     this.load(next);
   }

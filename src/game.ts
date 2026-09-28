@@ -83,7 +83,7 @@ export function createGame(screens: Screens): GameController {
 
   setMuted(!audio.enabled);
 
-  function startRun(cfg: PlayConfig): void {
+  function startRun(cfg: PlayConfig, replay = false): void {
     config = cfg;
     audio.resume();
     stats = new StatsTracker();
@@ -91,7 +91,7 @@ export function createGame(screens: Screens): GameController {
     active = sprint;
     screens.hideAll();
     playHud.classList.add("show");
-    active.begin(cfg);
+    active.begin(cfg, replay);
     state = "playing";
     if (isTouchDevice()) focusSink(sink);
   }
@@ -164,7 +164,7 @@ export function createGame(screens: Screens): GameController {
     if ((state === "playing" || state === "paused") && config) {
       screens.hidePause();
       screens.hideHelp();
-      startRun(config);
+      startRun(config, true);
     }
   }
 
@@ -219,8 +219,9 @@ export function createGame(screens: Screens): GameController {
 
   return {
     start: (cfg) => startRun(cfg),
+    // RETRY replays the same snippet; NEXT draws a different one (SHIG 37).
     retry: () => {
-      if (config) startRun(config);
+      if (config) startRun(config, true);
     },
     next: () => {
       if (config) startRun(config);

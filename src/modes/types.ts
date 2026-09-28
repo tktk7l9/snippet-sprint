@@ -32,7 +32,8 @@ export interface ModeServices {
 
 export interface GameMode {
   readonly id: ModeId;
-  begin(config: PlayConfig): void;
+  /** Start a run. `replay` reloads the current snippet instead of picking a new one. */
+  begin(config: PlayConfig, replay?: boolean): void;
   inputChar(ch: string): void;
   backspace(): void;
   /** Advance simulation + per-frame HUD/3D. Called only while playing. */

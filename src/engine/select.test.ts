@@ -65,6 +65,16 @@ describe("selectSnippet", () => {
     expect(s.id).toBe("a"); // index out of range -> fallback to first candidate
   });
 
+  it("replays the requested snippet regardless of filters and excludeId", () => {
+    const s = selectSnippet({ languages: ["py"], difficulty: "easy", category: "basics", replayId: "b", excludeId: "b", rng: first }, pool);
+    expect(s.id).toBe("b");
+  });
+
+  it("falls back to normal selection when the replay id is unknown", () => {
+    const s = selectSnippet({ languages: ["py"], difficulty: "mixed", category: "all", replayId: "gone", rng: first }, pool);
+    expect(s.id).toBe("c");
+  });
+
   it("uses the bundled snippets and Math.random by default", () => {
     const s = selectSnippet({ languages: ["ts"], difficulty: "mixed", category: "all" });
     expect(s.language).toBe("ts");
