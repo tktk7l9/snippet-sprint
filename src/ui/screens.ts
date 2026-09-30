@@ -165,6 +165,9 @@ export class Screens {
   }
   showHelp(): void {
     this.helpEl.classList.add("show");
+    // The overlay is aria-modal, so focus must move inside it; otherwise it stays
+    // on the HELP button that assistive tech now treats as hidden.
+    byId("help-close").focus({ preventScroll: true });
   }
   hideHelp(): void {
     this.helpEl.classList.remove("show");
