@@ -11,7 +11,8 @@ import {
   type Snippet,
 } from "../engine/content/types.js";
 import type { BestRecord } from "../engine/records.js";
-import { nextRankGoal, type Rank } from "../engine/scoring.js";
+import type { Rank } from "../engine/scoring.js";
+import { bestLine, goalLine } from "../engine/resultText.js";
 import type { MissEntry } from "../engine/stats.js";
 import type { PlayConfig } from "../modes/types.js";
 import { isStrayKeyActivation } from "../engine/activation.js";
@@ -63,23 +64,6 @@ function charLabel(ch: string): string {
   if (ch === "\n") return "↵";
   if (ch === "\t") return "⇥";
   return ch;
-}
-
-/** Constructive next step instead of a bare letter (SHIG 55, 89). */
-export function goalLine(wpm: number, accuracy: number): string {
-  const goal = nextRankGoal(wpm, accuracy);
-  if (!goal) return "最高ランクです";
-  return `次のランク ${goal.rank} まで: WPM ${goal.wpm} 以上 · 正確率 ${Math.round(goal.accuracy * 100)}% 以上`;
-}
-
-/** Best-record line: what this run was measured against, not a copy of its own numbers (SHIG 28). */
-export function bestLine(data: Pick<ResultData, "best" | "improved" | "previous" | "score">): string {
-  if (data.improved) {
-    if (!data.previous) return "初クリア · ベストとして記録";
-    return `前回ベスト ${data.previous.score}pt → ${data.score}pt`;
-  }
-  if (!data.best) return "";
-  return `BEST · WPM ${data.best.wpm} · ${Math.round(data.best.accuracy * 100)}% · ${data.best.score}pt`;
 }
 
 function pills(containerId: string): HTMLButtonElement[] {
@@ -203,6 +187,8 @@ export class Screens {
   }
   showHelp(): void {
     this.helpEl.classList.add("show");
+    // Keep Tab inside the help while it covers the start screen (SHIG 60).
+    this.startEl.inert = true;
     // The overlay is aria-modal, so focus must move inside it; otherwise it stays
     // on the HELP button that assistive tech now treats as hidden. Enter/Esc then
     // closes it right away, so keyboard users are not stranded (SHIG 8, 33, 22, 94).
@@ -210,6 +196,7 @@ export class Screens {
   }
   hideHelp(): void {
     this.helpEl.classList.remove("show");
+    this.startEl.inert = false;
     // Hand focus back to the main action when the start screen is underneath.
     if (this.startEl.classList.contains("show")) this.startBtn.focus({ preventScroll: true });
   }
@@ -221,6 +208,7 @@ export class Screens {
     this.resultsEl.classList.remove("show");
     this.pauseEl.classList.remove("show");
     this.helpEl.classList.remove("show");
+    this.startEl.inert = false;
   }
 
   // ---- start screen pills (bind to pre-rendered buttons) ----
