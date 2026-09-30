@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PREFS, loadPrefs, savePrefs } from "./prefs.js";
+import { DEFAULT_PREFS, loadMuted, loadPrefs, saveMuted, savePrefs } from "./prefs.js";
 import type { RecordStore } from "./records.js";
 
 const memory = (init: string | null = null): RecordStore & { value: string | null } => {
@@ -50,5 +50,23 @@ describe("loadPrefs", () => {
     const a = loadPrefs(memory());
     a.languages.push("py");
     expect(loadPrefs(memory()).languages).toEqual(["ts"]);
+  });
+});
+
+describe("muted preference", () => {
+  it("defaults to sound on", () => {
+    expect(loadMuted(memory())).toBe(false);
+  });
+
+  it("round-trips the mute state (SHIG 42, 12)", () => {
+    const store = memory();
+    saveMuted(store, true);
+    expect(loadMuted(store)).toBe(true);
+    saveMuted(store, false);
+    expect(loadMuted(store)).toBe(false);
+  });
+
+  it("ignores garbage", () => {
+    expect(loadMuted(memory("maybe"))).toBe(false);
   });
 });

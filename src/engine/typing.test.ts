@@ -71,11 +71,9 @@ describe("TypingSession", () => {
     expect(s.isComplete()).toBe(true);
   });
 
-  it("backspaces a settled cell and clears the error flag", () => {
+  it("backspaces a settled cell when there is no outstanding mistake", () => {
     const s = new TypingSession("ab");
     s.input("a");
-    s.input("y"); // wrong -> errored
-    expect(s.hasError).toBe(true);
     expect(s.backspace()).toBe(true);
     expect(s.index).toBe(0);
     expect(s.cells[0].status).toBe("pending");
@@ -83,11 +81,33 @@ describe("TypingSession", () => {
     expect(s.hasError).toBe(false);
   });
 
-  it("returns false when backspacing at the start", () => {
+  it("only clears the mistake on backspace, keeping correct input (SHIG 38, 54)", () => {
     const s = new TypingSession("ab");
-    s.input("x"); // wrong, still at index 0
+    s.input("a");
+    s.input("y"); // wrong -> errored, cursor stays on "b"
+    expect(s.hasError).toBe(true);
+    expect(s.backspace()).toBe(true);
+    expect(s.hasError).toBe(false);
+    expect(s.index).toBe(1);
+    expect(s.cells[0].status).toBe("correct");
+    // A second backspace now steps back as usual.
+    expect(s.backspace()).toBe(true);
+    expect(s.index).toBe(0);
+  });
+
+  it("returns false when backspacing at the start with nothing to clear", () => {
+    const s = new TypingSession("ab");
     expect(s.backspace()).toBe(false);
     expect(s.hasError).toBe(false);
+  });
+
+  it("clears a mistake at the start without stepping back", () => {
+    const s = new TypingSession("ab");
+    s.input("x"); // wrong, still at index 0
+    expect(s.backspace()).toBe(true);
+    expect(s.hasError).toBe(false);
+    expect(s.index).toBe(0);
+    expect(s.backspace()).toBe(false);
   });
 
   it("handles an empty target", () => {

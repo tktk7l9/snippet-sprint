@@ -105,9 +105,16 @@
             </div>
           </div>
 
-          <button id="start-btn" class="btn" type="button">START</button>
-          <p class="start-hint"><kbd>Enter</kbd> でスタート · <kbd>Esc</kbd> でポーズ</p>
-          <p id="mobile-hint">タップでキーボードを表示</p>
+          <!-- Sticky so the main action is always one tap away, even below 15 language pills (SHIG 20, 16, 52). -->
+          <div class="start-cta">
+            <div class="start-cta-row">
+              <button id="start-btn" class="btn" type="button">START</button>
+              <!-- Help was only reachable from the play HUD; first-timers need it before START (SHIG 89, 59). -->
+              <button id="start-help" class="btn ghost" type="button">遊び方</button>
+            </div>
+            <p class="start-hint"><kbd>Enter</kbd> でスタート · <kbd>Esc</kbd> でポーズ</p>
+            <p id="mobile-hint">タップでキーボードを表示</p>
+          </div>
         </div>
 
         <!-- ===== Play HUD ===== -->
@@ -149,6 +156,8 @@
             <div><div class="rv" id="result-score">0</div><div class="rl">Score</div></div>
             <div><div class="rv" id="result-combo">0</div><div class="rl">Max Combo</div></div>
           </div>
+          <div id="result-meta" class="result-meta"></div>
+          <div id="result-goal" class="result-goal"></div>
           <div id="result-best"></div>
           <div id="mistakes"></div>
           <div class="result-actions">

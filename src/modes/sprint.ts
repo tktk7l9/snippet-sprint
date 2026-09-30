@@ -101,6 +101,6 @@ export class SprintMode implements GameMode {
       maxCombo: snap.maxCombo,
       length: this.current.code.length,
     });
-    this.services.finish({ score, rank, recordKey: `sprint:${this.current.id}` });
+    this.services.finish({ score, rank, recordKey: `sprint:${this.current.id}`, snippet: this.current });
   }
 }

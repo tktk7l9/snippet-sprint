@@ -59,16 +59,17 @@ describe("saveResult", () => {
     const store = new MapStore();
 
     const first = saveResult(store, "x", rec(100));
-    expect(first).toEqual({ best: rec(100), improved: true });
+    expect(first).toEqual({ best: rec(100), improved: true, previous: null });
 
     const worse = saveResult(store, "x", rec(50));
-    expect(worse).toEqual({ best: rec(100), improved: false });
+    expect(worse).toEqual({ best: rec(100), improved: false, previous: rec(100) });
 
+    // The beaten record rides along so the results screen can show what improved (SHIG 28).
     const better = saveResult(store, "x", rec(200));
-    expect(better).toEqual({ best: rec(200), improved: true });
+    expect(better).toEqual({ best: rec(200), improved: true, previous: rec(100) });
 
     const other = saveResult(store, "y", rec(10));
-    expect(other).toEqual({ best: rec(10), improved: true });
+    expect(other).toEqual({ best: rec(10), improved: true, previous: null });
     expect(bestFor(store, "y")).toEqual(rec(10));
   });
 });

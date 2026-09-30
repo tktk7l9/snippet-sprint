@@ -57,3 +57,14 @@ export function loadPrefs(store: RecordStore): Prefs {
 export function savePrefs(store: RecordStore, prefs: Prefs): void {
   store.setItem(KEY, JSON.stringify(prefs));
 }
+
+const MUTED_KEY = "snippet-sprint:muted:v1";
+
+/** Whether the player muted the effects last time (SHIG 42, 12). Defaults to sound on. */
+export function loadMuted(store: RecordStore): boolean {
+  return store.getItem(MUTED_KEY) === "1";
+}
+
+export function saveMuted(store: RecordStore, muted: boolean): void {
+  store.setItem(MUTED_KEY, muted ? "1" : "0");
+}

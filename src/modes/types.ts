@@ -2,7 +2,7 @@
 // effects, audio, stats, results) and drives the active mode.
 
 import type { AudioEngine } from "../audio/audio.js";
-import type { Category, Difficulty, Language } from "../engine/content/types.js";
+import type { Category, Difficulty, Language, Snippet } from "../engine/content/types.js";
 import type { Rank } from "../engine/scoring.js";
 import type { StatsSnapshot } from "../engine/stats.js";
 import type { EffectsLayer } from "../render/effects.js";
@@ -25,8 +25,8 @@ export interface ModeServices {
   record(correct: boolean, expected: string): number;
   /** Current shared stats snapshot. */
   stats(now: number): StatsSnapshot;
-  /** End the run and show results. `score` is the headline metric. */
-  finish(opts: { score: number; rank: Rank; recordKey: string }): void;
+  /** End the run and show results. `score` is the headline metric; `snippet` gives the results screen its context. */
+  finish(opts: { score: number; rank: Rank; recordKey: string; snippet: Snippet }): void;
   toast(text: string): void;
 }
 
