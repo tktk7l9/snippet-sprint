@@ -306,14 +306,20 @@ describe("createGame", () => {
     expect(isShown("help-overlay")).toBe(false);
 
     h.game.start(CONFIG);
+    pressKey("a");
     await user.click(screen.getByRole("button", { name: "遊び方" }));
     expect(isShown("help-overlay")).toBe(true);
-    pressKey("a");
-    expect(byId("progress-fill").style.width).toBe("0%");
+    pressKey("b");
+    expect(byId("progress-fill").style.width).toBe("50%");
+    // Reading the help freezes the WPM clock just like PAUSE does.
+    h.tick(60000);
     await user.click(screen.getByRole("button", { name: "CLOSE" }));
     expect(isShown("help-overlay")).toBe(false);
-    pressKey("a");
-    expect(byId("progress-fill").style.width).toBe("50%");
+    h.tick(1000);
+    h.frame();
+    expect(byId("stat-time").textContent).toBe("1.0s");
+    pressKey("b");
+    expect(isShown("results")).toBe(true);
   });
 
   it("the sound pill toggles mute in place", async () => {

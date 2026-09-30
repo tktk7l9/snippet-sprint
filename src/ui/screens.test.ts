@@ -240,18 +240,19 @@ describe("Screens", () => {
       create().showResults({
         ...baseResult,
         misses: [
-          { char: " ", count: 4 },
-          { char: "\n", count: 2 },
-          { char: "\t", count: 1 },
+          { char: " ", count: 40 },
+          { char: "\n", count: 20 },
+          { char: "\t", count: 10 },
           { char: "{", count: 1 },
         ],
       });
       expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("弱点分析（つまずいた記号）");
       const rows = [...byId("mistakes").querySelectorAll(".miss-row")];
       expect(rows.map((r) => r.querySelector(".miss-key")?.textContent)).toEqual(["␣", "↵", "⇥", "{"]);
-      expect(rows.map((r) => r.querySelector(".miss-count")?.textContent)).toEqual(["×4", "×2", "×1", "×1"]);
+      expect(rows.map((r) => r.querySelector(".miss-count")?.textContent)).toEqual(["×40", "×20", "×10", "×1"]);
       const widths = rows.map((r) => (r.querySelector(".miss-bar") as HTMLElement).style.width);
-      expect(widths).toEqual(["240px", "120px", "60px", "60px"]);
+      // A rare miss still gets a visible 12px bar instead of a sliver.
+      expect(widths).toEqual(["240px", "120px", "60px", "12px"]);
     });
 
     it("uses the improved headline for a run with mistakes too", () => {
