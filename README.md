@@ -39,8 +39,8 @@ npm run dev      # http://localhost:5173
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm run test        # Vitest（純ロジック）
-npm run coverage    # src/engine を 100% カバレッジでゲート
+npm run test        # Vitest（純ロジック + jsdom の UI 振る舞いテスト）
+npm run coverage    # src/engine を 100%、UI 層（ui / input / modes / audio / game / main）を 98% 行カバレッジでゲート
 npm run build       # 型チェック + 本番ビルド
 ```
 
@@ -52,6 +52,7 @@ npm run build       # 型チェック + 本番ビルド
 - `src/input/` — 物理キーボード / モバイルソフトキーボード。
 - `src/audio/` — WebAudio 合成 SFX（アセット不要）。
 - `src/ui/` — DOM の HUD・各画面・コード描画（CodeView）。
+- `src/test/` — UI テスト用の共有フィクスチャ（`index.html` の実マークアップを jsdom に流し込む）。UI テストは `// @vitest-environment jsdom` で jsdom を選び、Testing Library でユーザー操作を再現する。`src/render/`（Three.js / WebGL）は jsdom で動かないためカバレッジ対象外。
 - `src/main.ts` — 軽量ブートストラップ（スタート画面のみ）。`src/game.ts`（Three.js を含む本体）を `import()` で遅延読込。
 - `public/` — `manifest.webmanifest`・`sw.js`（オフライン）・`ogp.png`（1200×630）・`favicon.svg`。
 
