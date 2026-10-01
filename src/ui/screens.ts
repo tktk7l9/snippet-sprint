@@ -43,7 +43,7 @@ const RANK_COLOR: Record<Rank, string> = {
   A: "#5cf2ff",
   B: "#c77dff",
   C: "#ffb86b",
-  D: "#6c7390",
+  D: "#7f86a3",
 };
 
 function charLabel(ch: string): string {
@@ -165,6 +165,9 @@ export class Screens {
   }
   showHelp(): void {
     this.helpEl.classList.add("show");
+    // The overlay is aria-modal, so focus must move inside it; otherwise it stays
+    // on the HELP button that assistive tech now treats as hidden.
+    byId("help-close").focus({ preventScroll: true });
   }
   hideHelp(): void {
     this.helpEl.classList.remove("show");
@@ -254,9 +257,9 @@ export class Screens {
 
   // ---- results ----
   private populateResults(data: ResultData): void {
-    const rankEl = byId("result-rank");
-    rankEl.textContent = data.rank;
-    rankEl.style.color = RANK_COLOR[data.rank];
+    byId("result-rank").textContent = data.rank;
+    // Color the heading (not the inner span) so the glow keeps following the rank.
+    byId("result-heading").style.color = RANK_COLOR[data.rank];
 
     byId("result-wpm").textContent = String(data.wpm);
     byId("result-acc").textContent = `${Math.round(data.accuracy * 100)}%`;
@@ -273,7 +276,7 @@ export class Screens {
 
     const box = byId("mistakes");
     box.innerHTML = "";
-    const title = document.createElement("h3");
+    const title = document.createElement("h2");
 
     if (data.misses.length === 0) {
       title.textContent = data.improved ? "ノーミス · ベスト更新 🎉" : "ノーミス 🎯";
@@ -295,6 +298,7 @@ export class Screens {
 
       const bar = document.createElement("div");
       bar.className = "miss-bar";
+      bar.setAttribute("aria-hidden", "true"); // the count next to it carries the value
       bar.style.width = `${Math.max(12, (m.count / max) * 240)}px`;
 
       const count = document.createElement("span");

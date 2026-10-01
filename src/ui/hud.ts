@@ -24,6 +24,8 @@ export class Hud {
   private readonly metaCatEl = byId("meta-cat");
   private readonly descEl = byId("code-desc");
   private readonly progressEl = byId("progress-fill");
+  private readonly progressBar = byId("progress");
+  private progressPct = -1;
 
   show(): void {
     this.root.classList.add("show");
@@ -54,7 +56,11 @@ export class Hud {
   }
 
   setProgress(fraction: number): void {
-    this.progressEl.style.width = `${Math.round(fraction * 100)}%`;
+    const pct = Math.round(fraction * 100);
+    if (pct === this.progressPct) return;
+    this.progressPct = pct;
+    this.progressEl.style.width = `${pct}%`;
+    this.progressBar.setAttribute("aria-valuenow", String(pct));
   }
 
   shake(): void {
