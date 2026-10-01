@@ -134,6 +134,16 @@ describe("SprintMode", () => {
     expect(spans[1].className).toBe("ch pending");
   });
 
+  it("backspace after a miss clears the error without undoing correct input", () => {
+    mode.begin(config);
+    mode.inputChar("a");
+    mode.inputChar("z");
+    const classes = () => [...byId("code").querySelectorAll("span")].slice(0, 2).map((s) => s.className);
+    expect(classes()).toEqual(["ch correct", "ch current error"]);
+    mode.backspace();
+    expect(classes()).toEqual(["ch correct", "ch current"]);
+  });
+
   it("finishes with a score once the last character lands and auto-skips indentation", () => {
     mode.begin(config);
     env.tick(500);
@@ -146,6 +156,8 @@ describe("SprintMode", () => {
     expect(env.services.finish).toHaveBeenCalledTimes(1);
     const call = env.services.finish.mock.calls[0][0];
     expect(call.recordKey).toBe("sprint:a");
+    // The finished snippet travels with the result so the results screen can name it.
+    expect(call.snippet).toBe(snippetA);
     expect(["S", "A", "B", "C", "D"]).toContain(call.rank);
     expect(call.score).toBeGreaterThan(0);
     expect(byId("progress-fill").style.width).toBe("100%");

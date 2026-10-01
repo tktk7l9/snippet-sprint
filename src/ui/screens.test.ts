@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { KEY_GRACE_MS } from "../engine/activation.js";
+import type { Snippet } from "../engine/content/types.js";
 import { isShown, mountApp, pressKey } from "../test/dom.js";
 import { byId } from "./dom.js";
 import { Screens, type ResultData, type ScreenHandlers } from "./screens.js";
@@ -23,6 +24,16 @@ function pressedNames(group: string): string[] {
     .map((b) => b.textContent ?? "");
 }
 
+const snippet: Snippet = {
+  id: "fixture",
+  language: "go",
+  category: "flow",
+  difficulty: "easy",
+  label: "for loop",
+  description: "fixture snippet",
+  code: "ab",
+};
+
 const baseResult: ResultData = {
   rank: "A",
   wpm: 61,
@@ -32,6 +43,8 @@ const baseResult: ResultData = {
   misses: [],
   best: null,
   improved: false,
+  previous: null,
+  snippet,
 };
 
 describe("Screens", () => {
@@ -226,14 +239,52 @@ describe("Screens", () => {
       expect(document.activeElement).toBe(byId("btn-next"));
     });
 
-    it("celebrates a new best and shows the previous best line", () => {
+    it("says what was typed and names only the floors the next rank still needs", () => {
+      const screens = create();
+      screens.showResults(baseResult);
+      expect(byId("result-meta").textContent).toBe("Go · Flow · Easy · for loop");
+      expect(byId("result-meta").querySelector(".meta-lang")?.textContent).toBe("Go");
+      // 61 WPM already beats the S floor, so only accuracy is asked for.
+      expect(byId("result-goal").textContent).toBe("次のランク S まで: 正確率 98% 以上");
+      screens.showResults({ ...baseResult, rank: "D", wpm: 10, accuracy: 0.5 });
+      expect(byId("result-goal").textContent).toBe("次のランク C まで: WPM 18 以上 · 正確率 80% 以上");
+      screens.showResults({ ...baseResult, rank: "S", wpm: 80, accuracy: 0.99 });
+      expect(byId("result-goal").textContent).toBe("最高ランクです");
+    });
+
+    it("replaces the snippet context instead of appending on the next result", () => {
+      const screens = create();
+      screens.showResults(baseResult);
+      screens.showResults({ ...baseResult, snippet: { ...snippet, language: "py", label: "list comp" } });
+      expect(byId("result-meta").textContent).toBe("Python · Flow · Easy · list comp");
+      expect(byId("result-meta").querySelectorAll(".meta-lang")).toHaveLength(1);
+    });
+
+    it("shows the standing best when the run did not beat it", () => {
+      const best = { wpm: 70, accuracy: 0.98, score: 2000, rank: "S" as const };
+      create().showResults({ ...baseResult, best, previous: best });
+      expect(byId("result-best").textContent).toBe("BEST · WPM 70 · 98% · 2000pt");
+      expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス 🎯");
+    });
+
+    it("celebrates a new best and shows the previous best it beat", () => {
       create().showResults({
         ...baseResult,
         improved: true,
-        best: { wpm: 70, accuracy: 0.98, score: 2000, rank: "S" },
+        best: { wpm: 61, accuracy: 0.955, score: 1234, rank: "A" },
+        previous: { wpm: 50, accuracy: 0.9, score: 900, rank: "B" },
       });
-      expect(byId("result-best").textContent).toBe("BEST · WPM 70 · 98% · 2000pt");
+      expect(byId("result-best").textContent).toBe("前回ベスト 900pt → 1234pt");
       expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス · ベスト更新 🎉");
+    });
+
+    it("calls a first clear a first clear rather than echoing its own numbers", () => {
+      create().showResults({
+        ...baseResult,
+        improved: true,
+        best: { wpm: 61, accuracy: 0.955, score: 1234, rank: "A" },
+      });
+      expect(byId("result-best").textContent).toBe("初クリア · ベストとして記録");
     });
 
     it("lists mistakes with readable glyphs and bars scaled to the worst one", () => {
@@ -329,6 +380,55 @@ describe("Screens", () => {
       expect(isShown("help-overlay")).toBe(false);
     });
 
+    it("opens help from the start screen, traps Tab inside it, and returns focus to START", async () => {
+      create().showStart();
+      await user.click(within(byId("start-screen")).getByRole("button", { name: "遊び方" }));
+      expect(isShown("help-overlay")).toBe(true);
+      expect(isShown("start-screen")).toBe(true);
+      expect(byId("help-overlay").getAttribute("role")).toBe("dialog");
+      expect(byId("help-overlay").getAttribute("aria-modal")).toBe("true");
+      // The start screen underneath is inert so Tab cannot escape to its pills.
+      expect(byId("start-screen").inert).toBe(true);
+      expect(document.activeElement).toBe(byId("help-close"));
+      await user.click(screen.getByRole("button", { name: "CLOSE" }));
+      expect(isShown("help-overlay")).toBe(false);
+      expect(byId("start-screen").inert).toBe(false);
+      expect(document.activeElement).toBe(byId("start-btn"));
+    });
+
+    it("closes help with Escape on the start screen", () => {
+      const screens = create();
+      screens.showStart();
+      screens.showHelp();
+      const e = pressKey("Escape");
+      expect(e.defaultPrevented).toBe(true);
+      expect(screens.isHelpOpen()).toBe(false);
+      expect(document.activeElement).toBe(byId("start-btn"));
+    });
+
+    it("leaves Escape to the game when help is closed or opened mid-run", () => {
+      const screens = create();
+      screens.showStart();
+      // Help closed: nothing to do.
+      expect(pressKey("Escape").defaultPrevented).toBe(false);
+      // Help over a run (start screen hidden): the game keyboard owns Escape.
+      screens.hideStart();
+      screens.showHelp();
+      expect(pressKey("Escape").defaultPrevented).toBe(false);
+      expect(screens.isHelpOpen()).toBe(true);
+      // Closing it mid-run must not pull focus to the hidden START button.
+      byId("help-close").focus();
+      screens.hideHelp();
+      expect(document.activeElement).not.toBe(byId("start-btn"));
+    });
+
+    it("tells players that Backspace only cancels the mistake", () => {
+      create();
+      const body = byId("help-overlay").textContent ?? "";
+      expect(body).toContain("ミスだけを取り消せます");
+      expect(body).not.toContain("1文字戻れます");
+    });
+
     it("hideAll clears every overlay at once", () => {
       const screens = create();
       screens.showStart();
@@ -338,6 +438,8 @@ describe("Screens", () => {
       for (const id of ["start-screen", "results", "pause-overlay", "help-overlay"]) {
         expect(isShown(id)).toBe(false);
       }
+      // A start screen left inert would be unusable the next time it is shown.
+      expect(byId("start-screen").inert).toBe(false);
     });
   });
 });

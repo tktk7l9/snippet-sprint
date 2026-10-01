@@ -192,11 +192,54 @@ describe("createGame", () => {
     expect(byId("result-wpm").textContent).toBe("8");
     expect(byId("result-acc").textContent).toBe("100%");
     expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス · ベスト更新 🎉");
+    // The results say what was typed, what to aim for next, and that this is a first clear.
+    expect(byId("result-meta").textContent).toBe("Go · Flow · Easy · fixture");
+    expect(byId("result-goal").textContent).toBe("次のランク C まで: WPM 18 以上");
+    expect(byId("result-best").textContent).toBe("初クリア · ベストとして記録");
     const bests = JSON.parse(localStorage.getItem("snippet-sprint:bests:v1") ?? "{}");
     expect(bests["sprint:fixture"]).toMatchObject({ wpm: 8, accuracy: 1 });
     // An Enter that leaks from typing does not skip the results.
     pressKey("Enter");
     expect(isShown("results")).toBe(true);
+  });
+
+  it("names the previous best when a replay beats it, and the standing best when it does not", async () => {
+    const h = await boot();
+    h.game.start(CONFIG);
+    pressKey("a");
+    h.tick(3000);
+    pressKey("b");
+    const first = Number(byId("result-score").textContent);
+    h.tick(1000);
+    h.game.retry();
+    pressKey("a");
+    h.tick(1000);
+    pressKey("b");
+    const second = Number(byId("result-score").textContent);
+    expect(second).toBeGreaterThan(first);
+    expect(byId("result-best").textContent).toBe(`前回ベスト ${first}pt → ${second}pt`);
+    h.tick(1000);
+    h.game.retry();
+    pressKey("a");
+    h.tick(5000);
+    pressKey("b");
+    expect(byId("result-best").textContent).toContain(`BEST · WPM`);
+    expect(byId("result-best").textContent).toContain(`${second}pt`);
+  });
+
+  it("Backspace after a miss only cancels the miss and keeps the correct input", async () => {
+    const h = await boot();
+    h.game.start(CONFIG);
+    pressKey("a");
+    pressKey("x");
+    const spans = () => [...byId("code").querySelectorAll("span")].map((s) => s.className);
+    expect(spans()).toEqual(["ch correct", "ch current error"]);
+    pressKey("Backspace");
+    expect(spans()).toEqual(["ch correct", "ch current"]);
+    expect(byId("progress-fill").style.width).toBe("50%");
+    // With no outstanding miss it steps back one character as before.
+    pressKey("Backspace");
+    expect(spans()).toEqual(["ch current", "ch pending"]);
   });
 
   it("lists the characters that were mistyped", async () => {
@@ -299,15 +342,23 @@ describe("createGame", () => {
 
   it("HELP suspends the run and CLOSE resumes it; on the menu it just opens", async () => {
     const h = await boot();
-    await user.click(screen.getByRole("button", { name: "遊び方" }));
+    // Before a run, help is reachable from the start screen itself.
+    await user.click(within(byId("start-screen")).getByRole("button", { name: "遊び方" }));
     expect(isShown("help-overlay")).toBe(true);
     expect(isShown("start-screen")).toBe(true);
     await user.click(screen.getByRole("button", { name: "CLOSE" }));
     expect(isShown("help-overlay")).toBe(false);
+    expect(document.activeElement).toBe(byId("start-btn"));
+    // Escape closes it on the menu without starting or pausing anything.
+    await user.click(within(byId("start-screen")).getByRole("button", { name: "遊び方" }));
+    pressKey("Escape");
+    expect(isShown("help-overlay")).toBe(false);
+    expect(isShown("pause-overlay")).toBe(false);
+    expect(isShown("start-screen")).toBe(true);
 
     h.game.start(CONFIG);
     pressKey("a");
-    await user.click(screen.getByRole("button", { name: "遊び方" }));
+    await user.click(within(byId("play-hud")).getByRole("button", { name: "遊び方" }));
     expect(isShown("help-overlay")).toBe(true);
     pressKey("b");
     expect(byId("progress-fill").style.width).toBe("50%");
@@ -332,6 +383,21 @@ describe("createGame", () => {
     expect(pill.getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("remembers the mute choice for the next launch", async () => {
+    await boot();
+    await user.click(screen.getByRole("button", { name: "効果音" }));
+    expect(localStorage.getItem("snippet-sprint:muted:v1")).toBe("1");
+    untrack();
+    untrack = trackGlobalListeners();
+    vi.resetModules();
+    await boot();
+    const pill = screen.getByRole("button", { name: "効果音" });
+    expect(pill.getAttribute("aria-pressed")).toBe("false");
+    expect(pill.textContent).toContain("MUTED");
+    await user.click(pill);
+    expect(localStorage.getItem("snippet-sprint:muted:v1")).toBe("0");
+  });
+
   it("RETRY and NEXT are no-ops before any run has started", async () => {
     const h = await boot();
     h.game.retry();
@@ -346,6 +412,14 @@ describe("createGame", () => {
     vi.spyOn(document, "hidden", "get").mockReturnValue(false);
     document.dispatchEvent(new Event("visibilitychange"));
     expect(isShown("pause-overlay")).toBe(false);
+  });
+
+  it("leaves the app frame alone on non-touch devices even with a visual viewport", async () => {
+    const vv = Object.assign(new EventTarget(), { height: 300, offsetTop: 0, scale: 1 });
+    vi.stubGlobal("visualViewport", vv);
+    await boot();
+    vv.dispatchEvent(new Event("resize"));
+    expect(byId("app").style.height).toBe("");
   });
 
   it("forwards window resize to the renderer", async () => {
@@ -389,6 +463,27 @@ describe("createGame", () => {
       expect(byId("progress-fill").style.width).toBe("50%");
       sink.dispatchEvent(new InputEvent("beforeinput", { inputType: "deleteContentBackward", bubbles: true, cancelable: true }));
       expect(byId("code").querySelectorAll("span")[0].className).toBe("ch current");
+    });
+
+    it("fits the app frame to the visual viewport so the soft keyboard covers nothing", async () => {
+      const vv = Object.assign(new EventTarget(), { height: 420.4, offsetTop: 12.6, scale: 1 });
+      vi.stubGlobal("visualViewport", vv);
+      await boot({ touch: true });
+      const app = byId("app");
+      expect(app.style.height).toBe("");
+      vv.dispatchEvent(new Event("resize"));
+      expect(app.style.height).toBe("420px");
+      expect(app.style.top).toBe("13px");
+      vv.height = 800;
+      vv.offsetTop = 0;
+      vv.dispatchEvent(new Event("scroll"));
+      expect(app.style.height).toBe("800px");
+      expect(app.style.top).toBe("0px");
+      // While pinch-zoomed the layout goes back to full size instead of following.
+      vv.scale = 2;
+      vv.dispatchEvent(new Event("resize"));
+      expect(app.style.height).toBe("");
+      expect(app.style.top).toBe("");
     });
 
     it("refocuses the input after resuming and after toggling sound", async () => {
