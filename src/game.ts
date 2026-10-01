@@ -12,8 +12,11 @@ import { attachMobileInput, focusSink, isTouchDevice } from "./input/mobile.js";
 import { StatsTracker } from "./engine/stats.js";
 import type { Rank } from "./engine/scoring.js";
 import { bestFor, saveResult, type RecordStore } from "./engine/records.js";
+import { loadMuted, saveMuted } from "./engine/prefs.js";
+import { fitFrame } from "./engine/viewport.js";
 import { SprintMode } from "./modes/sprint.js";
 import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
+import type { Snippet } from "./engine/content/types.js";
 import type { Screens } from "./ui/screens.js";
 import { safeStore } from "./storage.js";
 
@@ -39,8 +42,11 @@ export function createGame(screens: Screens): GameController {
   ctx.scene.add(effects.group);
 
   const audio = new AudioEngine();
+  // The mute choice survives a reload like the other prefs (SHIG 42, 12).
+  audio.enabled = !loadMuted(store);
   const sink = byId<HTMLInputElement>("key-sink");
   const playHud = byId("play-hud");
+  const app = byId("app");
 
   let state: AppState = "menu";
   let stats = new StatsTracker();
@@ -60,7 +66,7 @@ export function createGame(screens: Screens): GameController {
       return stats.snapshot(now);
     },
     finish(opts) {
-      finishRun(opts.score, opts.rank, opts.recordKey);
+      finishRun(opts.score, opts.rank, opts.recordKey, opts.snippet);
     },
     toast,
   };
@@ -82,7 +88,7 @@ export function createGame(screens: Screens): GameController {
     if (isTouchDevice()) focusSink(sink);
   }
 
-  function finishRun(score: number, rank: Rank, recordKey: string): void {
+  function finishRun(score: number, rank: Rank, recordKey: string, snippet: Snippet): void {
     const now = performance.now();
     stats.finish(now);
     const snap = stats.snapshot(now);
@@ -105,6 +111,8 @@ export function createGame(screens: Screens): GameController {
       misses: stats.topMisses(),
       best: bestFor(store, recordKey),
       improved: outcome.improved,
+      previous: outcome.previous,
+      snippet,
     });
   }
 
@@ -181,12 +189,28 @@ export function createGame(screens: Screens): GameController {
   byId("pause-resume").addEventListener("click", () => unsuspend());
   byId("pause-retry").addEventListener("click", () => onRestart());
   byId("status-bar").addEventListener("click", () => {
-    setMuted(!audio.toggle());
+    const muted = !audio.toggle();
+    setMuted(muted);
+    saveMuted(store, muted);
     // Tapping the toggle moved focus to it and closed the soft keyboard; bring
     // it back so a touch player can keep typing without another tap.
     if (state === "playing" && isTouchDevice()) focusSink(sink);
   });
   window.addEventListener("resize", () => ctx.resize());
+
+  // Keep the whole HUD above the soft keyboard: size the app frame to the
+  // visual viewport instead of the layout viewport (SHIG 30, 85, 82).
+  const vv = window.visualViewport;
+  if (vv && isTouchDevice()) {
+    const fit = (): void => {
+      const frame = fitFrame(vv);
+      // The canvas keeps the window size so the backdrop still fills the screen behind the keyboard.
+      app.style.height = frame ? `${frame.height}px` : "";
+      app.style.top = frame ? `${frame.top}px` : "";
+    };
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+  }
 
   // auto-pause when the tab/window loses focus so the WPM clock stays honest
   window.addEventListener("blur", () => {

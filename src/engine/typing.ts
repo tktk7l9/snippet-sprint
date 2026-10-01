@@ -91,9 +91,17 @@ export class TypingSession {
     return { correct: false, completed: false, expected, advanced: 0 };
   }
 
-  /** Step back one settled cell (mistake recovery). Returns false at the start. */
+  /**
+   * Backspace. A wrong key never advances the cursor, so with an outstanding
+   * mistake there is nothing to delete: only the error flag is cleared and the
+   * correct input stays (SHIG 38, 54). Otherwise step back one settled cell.
+   * Returns false when nothing changed.
+   */
   backspace(): boolean {
-    this.errored = false;
+    if (this.errored) {
+      this.errored = false;
+      return true;
+    }
     if (this.idx === 0) return false;
     this.idx--;
     this.cells[this.idx].status = "pending";

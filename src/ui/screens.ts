@@ -1,9 +1,18 @@
 // Overlay screens: start (language/category/difficulty picker), results
 // (rank + stats + mistake analysis), pause and help.
 
-import type { Category, Difficulty, Language } from "../engine/content/types.js";
+import {
+  CATEGORY_LABELS,
+  DIFFICULTY_LABELS,
+  LANGUAGE_LABELS,
+  type Category,
+  type Difficulty,
+  type Language,
+  type Snippet,
+} from "../engine/content/types.js";
 import type { BestRecord } from "../engine/records.js";
 import type { Rank } from "../engine/scoring.js";
+import { bestLine, goalLine } from "../engine/resultText.js";
 import type { MissEntry } from "../engine/stats.js";
 import type { PlayConfig } from "../modes/types.js";
 import { isStrayKeyActivation } from "../engine/activation.js";
@@ -23,6 +32,10 @@ export interface ResultData {
   misses: MissEntry[];
   best: BestRecord | null;
   improved: boolean;
+  /** The record this run was measured against (null on a first clear). */
+  previous: BestRecord | null;
+  /** What was typed, so the results screen has context (SHIG 24, 59). */
+  snippet: Snippet;
 }
 
 /** Filter feasibility, injected lazily so the snippet data stays out of the initial bundle. */
@@ -106,6 +119,13 @@ export class Screens {
       e.stopImmediatePropagation();
       handlers.onStart(this.config());
     });
+    // Esc closes help outside a run; in-game Esc is owned by the keyboard handler (SHIG 60).
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !this.isHelpOpen()) return;
+      if (!this.startEl.classList.contains("show")) return;
+      e.preventDefault();
+      this.hideHelp();
+    });
     const resultAction = (id: string, run: () => void): void => {
       byId(id).addEventListener("click", (e) => {
         if (isStrayKeyActivation(e.detail, this.resultsShownAt, performance.now())) return;
@@ -117,6 +137,7 @@ export class Screens {
     resultAction("btn-menu", () => handlers.onMenu());
     byId("pause-menu").addEventListener("click", () => handlers.onMenu());
     byId("help-close").addEventListener("click", () => this.hideHelp());
+    byId("start-help").addEventListener("click", () => this.showHelp());
   }
 
   config(): PlayConfig {
@@ -146,6 +167,7 @@ export class Screens {
   showResults(data: ResultData): void {
     this.hideAll();
     this.populateResults(data);
+    this.renderContext(data);
     this.resultsEl.classList.add("show");
     this.resultsShownAt = performance.now();
     byId("btn-next").focus({ preventScroll: true });
@@ -165,12 +187,18 @@ export class Screens {
   }
   showHelp(): void {
     this.helpEl.classList.add("show");
+    // Keep Tab inside the help while it covers the start screen (SHIG 60).
+    this.startEl.inert = true;
     // The overlay is aria-modal, so focus must move inside it; otherwise it stays
-    // on the HELP button that assistive tech now treats as hidden.
+    // on the HELP button that assistive tech now treats as hidden. Enter/Esc then
+    // closes it right away, so keyboard users are not stranded (SHIG 8, 33, 22, 94).
     byId("help-close").focus({ preventScroll: true });
   }
   hideHelp(): void {
     this.helpEl.classList.remove("show");
+    this.startEl.inert = false;
+    // Hand focus back to the main action when the start screen is underneath.
+    if (this.startEl.classList.contains("show")) this.startBtn.focus({ preventScroll: true });
   }
   isHelpOpen(): boolean {
     return this.helpEl.classList.contains("show");
@@ -180,6 +208,7 @@ export class Screens {
     this.resultsEl.classList.remove("show");
     this.pauseEl.classList.remove("show");
     this.helpEl.classList.remove("show");
+    this.startEl.inert = false;
   }
 
   // ---- start screen pills (bind to pre-rendered buttons) ----
@@ -256,6 +285,20 @@ export class Screens {
   }
 
   // ---- results ----
+  /** Snippet identity and the next rank to aim for (SHIG 24, 55, 89). */
+  private renderContext(data: ResultData): void {
+    const meta = byId("result-meta");
+    meta.textContent = "";
+    const lang = document.createElement("span");
+    lang.className = "meta-lang";
+    lang.textContent = LANGUAGE_LABELS[data.snippet.language];
+    meta.append(
+      lang,
+      ` · ${CATEGORY_LABELS[data.snippet.category]} · ${DIFFICULTY_LABELS[data.snippet.difficulty]} · ${data.snippet.label}`,
+    );
+    byId("result-goal").textContent = goalLine(data.wpm, data.accuracy);
+  }
+
   private populateResults(data: ResultData): void {
     byId("result-rank").textContent = data.rank;
     // Color the heading (not the inner span) so the glow keeps following the rank.
@@ -267,12 +310,8 @@ export class Screens {
     byId("result-combo").textContent = String(data.maxCombo);
 
     const bestEl = byId("result-best");
-    if (data.best) {
-      bestEl.textContent = `BEST · WPM ${data.best.wpm} · ${Math.round(data.best.accuracy * 100)}% · ${data.best.score}pt`;
-      bestEl.style.cssText = "font-size:12px;letter-spacing:0.12em;color:var(--dim);font-family:ui-monospace,monospace;";
-    } else {
-      bestEl.textContent = "";
-    }
+    bestEl.style.cssText = "font-size:12px;letter-spacing:0.12em;color:var(--dim);font-family:ui-monospace,monospace;";
+    bestEl.textContent = bestLine(data);
 
     const box = byId("mistakes");
     box.innerHTML = "";

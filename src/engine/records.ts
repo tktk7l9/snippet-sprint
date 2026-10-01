@@ -38,6 +38,8 @@ export function bestFor(store: RecordStore, id: string): BestRecord | null {
 export interface SaveOutcome {
   readonly best: BestRecord;
   readonly improved: boolean;
+  /** The record on file before this run (null on a first clear), for "what improved" (SHIG 28). */
+  readonly previous: BestRecord | null;
 }
 
 /** Persist `record` for `id` only if it beats the existing score. */
@@ -47,12 +49,12 @@ export function saveResult(
   record: BestRecord,
 ): SaveOutcome {
   const bests = loadBests(store);
-  const prev = bests[id];
+  const prev = bests[id] ?? null;
   const improved = !prev || record.score > prev.score;
   if (improved) {
     bests[id] = record;
     store.setItem(KEY, JSON.stringify(bests));
-    return { best: record, improved: true };
+    return { best: record, improved: true, previous: prev };
   }
-  return { best: prev, improved: false };
+  return { best: prev, improved: false, previous: prev };
 }
