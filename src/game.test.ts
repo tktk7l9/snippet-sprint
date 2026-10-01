@@ -191,7 +191,7 @@ describe("createGame", () => {
     expect(isShown("play-hud")).toBe(false);
     expect(byId("result-wpm").textContent).toBe("8");
     expect(byId("result-acc").textContent).toBe("100%");
-    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("ノーミス · ベスト更新 🎉");
+    expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス · ベスト更新 🎉");
     const bests = JSON.parse(localStorage.getItem("snippet-sprint:bests:v1") ?? "{}");
     expect(bests["sprint:fixture"]).toMatchObject({ wpm: 8, accuracy: 1 });
     // An Enter that leaks from typing does not skip the results.

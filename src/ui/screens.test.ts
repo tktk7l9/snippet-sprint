@@ -222,7 +222,7 @@ describe("Screens", () => {
       expect(byId("result-score").textContent).toBe("1234");
       expect(byId("result-combo").textContent).toBe("27");
       expect(byId("result-best").textContent).toBe("");
-      expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("ノーミス 🎯");
+      expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス 🎯");
       expect(document.activeElement).toBe(byId("btn-next"));
     });
 
@@ -233,7 +233,7 @@ describe("Screens", () => {
         best: { wpm: 70, accuracy: 0.98, score: 2000, rank: "S" },
       });
       expect(byId("result-best").textContent).toBe("BEST · WPM 70 · 98% · 2000pt");
-      expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("ノーミス · ベスト更新 🎉");
+      expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("ノーミス · ベスト更新 🎉");
     });
 
     it("lists mistakes with readable glyphs and bars scaled to the worst one", () => {
@@ -246,7 +246,7 @@ describe("Screens", () => {
           { char: "{", count: 1 },
         ],
       });
-      expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("弱点分析（つまずいた記号）");
+      expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("弱点分析（つまずいた記号）");
       const rows = [...byId("mistakes").querySelectorAll(".miss-row")];
       expect(rows.map((r) => r.querySelector(".miss-key")?.textContent)).toEqual(["␣", "↵", "⇥", "{"]);
       expect(rows.map((r) => r.querySelector(".miss-count")?.textContent)).toEqual(["×40", "×20", "×10", "×1"]);
@@ -261,7 +261,7 @@ describe("Screens", () => {
         improved: true,
         misses: [{ char: "a", count: 1 }],
       });
-      expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("弱点分析 · ベスト更新 🎉");
+      expect(within(byId("mistakes")).getByRole("heading", { level: 2 }).textContent).toBe("弱点分析 · ベスト更新 🎉");
     });
 
     it("clears the previous run's mistakes when a clean run follows", () => {
