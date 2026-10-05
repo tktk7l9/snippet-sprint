@@ -5,3 +5,8 @@ coverage
 .DS_Store
 .vercel
 *.tsbuildinfo
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.wrangler
