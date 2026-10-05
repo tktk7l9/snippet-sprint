@@ -33,8 +33,12 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("/index.html", copy));
+          // Only a successful response may replace the offline shell; a 404
+          // or 5xx page must never become what every offline navigation shows.
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("/index.html", copy));
+          }
           return res;
         })
         .catch(() => caches.match("/index.html")),
@@ -47,8 +51,10 @@ self.addEventListener("fetch", (event) => {
       (hit) =>
         hit ||
         fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
           return res;
         }),
     ),
