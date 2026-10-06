@@ -8,9 +8,12 @@ export type Language =
   | "java"
   | "cpp"
   | "c"
+  | "zig"
   | "csharp"
   | "swift"
   | "kotlin"
+  | "dart"
+  | "scala"
   | "ruby"
   | "php"
   | "sql"
@@ -45,9 +48,12 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   java: "Java",
   cpp: "C++",
   c: "C",
+  zig: "Zig",
   csharp: "C#",
   swift: "Swift",
   kotlin: "Kotlin",
+  dart: "Dart",
+  scala: "Scala",
   ruby: "Ruby",
   php: "PHP",
   sql: "SQL",
@@ -81,9 +87,12 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "java",
   "cpp",
   "c",
+  "zig",
   "csharp",
   "swift",
   "kotlin",
+  "dart",
+  "scala",
   "ruby",
   "php",
   "sql",
