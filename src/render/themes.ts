@@ -19,9 +19,12 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   java: { primary: 0xe76f00, secondary: 0x5382a1 }, // Java orange + blue
   cpp: { primary: 0x00599c, secondary: 0x659ad2 }, // C++ blue
   c: { primary: 0xa8b9cc, secondary: 0x5c6bc0 }, // C grey-blue
+  zig: { primary: 0xf7a41d, secondary: 0xffd27f }, // Zig amber
   csharp: { primary: 0x512bd4, secondary: 0x9d7be8 }, // .NET purple
   swift: { primary: 0xf05138, secondary: 0xfb9c86 }, // Swift orange
   kotlin: { primary: 0x7f52ff, secondary: 0xf88909 }, // Kotlin purple + orange
+  dart: { primary: 0x0175c2, secondary: 0x13b9fd }, // Dart blue + Flutter sky
+  scala: { primary: 0xdc322f, secondary: 0xff8a80 }, // Scala red
   ruby: { primary: 0xcc342d, secondary: 0xe8857e }, // Ruby red
   php: { primary: 0x777bb4, secondary: 0xb0b3d6 }, // PHP purple
   sql: { primary: 0x00758f, secondary: 0xf29111 }, // MySQL teal + amber
