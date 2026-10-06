@@ -9,6 +9,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin
 
 # Vite emits these with content hashes, so they can be cached forever. This makes
 # explicit the immutable caching that Vercel used to add automatically.
