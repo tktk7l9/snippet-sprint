@@ -28,7 +28,10 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   ruby: { primary: 0xcc342d, secondary: 0xe8857e }, // Ruby red
   php: { primary: 0x777bb4, secondary: 0xb0b3d6 }, // PHP purple
   sql: { primary: 0x00758f, secondary: 0xf29111 }, // MySQL teal + amber
+  r: { primary: 0x276dc3, secondary: 0xa9b1bc }, // R blue + grey ring
   bash: { primary: 0x4eaa25, secondary: 0xa5ff90 }, // terminal green
+  perl: { primary: 0x4d5ea8, secondary: 0xd4b483 }, // Perl onion blue + camel sand
+  lua: { primary: 0x2b3fd0, secondary: 0xb9c2ff }, // Lua navy + moon
   html: { primary: 0xe34f26, secondary: 0xf06529 }, // HTML5 orange
   css: { primary: 0x2965f1, secondary: 0x56c5ff }, // CSS3 blue
   drill: { primary: 0x5cf2ff, secondary: 0xc77dff }, // neutral neon
