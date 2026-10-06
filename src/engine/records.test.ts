@@ -44,6 +44,22 @@ describe("loadBests", () => {
   it("ignores malformed JSON", () => {
     expect(loadBests(returning("{not json"))).toEqual({});
   });
+
+  it("ignores a stored array", () => {
+    expect(loadBests(returning("[1,2]"))).toEqual({});
+  });
+
+  it("drops entries whose fields are not a record and strips extra keys", () => {
+    const data = JSON.stringify({
+      ok: { ...rec(10), extra: "x" },
+      str: "nope",
+      nul: null,
+      nan: { wpm: "10", accuracy: 0.9, score: 10, rank: "B" },
+      rank: { wpm: 10, accuracy: 0.9, score: 10, rank: "Z" },
+      missing: { wpm: 10, accuracy: 0.9 },
+    });
+    expect(loadBests(returning(data))).toEqual({ ok: rec(10) });
+  });
 });
 
 describe("bestFor", () => {
@@ -51,6 +67,14 @@ describe("bestFor", () => {
     const store = returning(JSON.stringify({ x: rec(5) }));
     expect(bestFor(store, "x")).toEqual(rec(5));
     expect(bestFor(store, "missing")).toBeNull();
+  });
+
+  it("never answers with something inherited from Object.prototype", () => {
+    const store = returning('{"__proto__": {"wpm": 5, "accuracy": 0.9, "score": 5, "rank": "B"}}');
+    expect(Object.getPrototypeOf(loadBests(store))).toBe(Object.prototype);
+    expect(bestFor(store, "constructor")).toBeNull();
+    expect(bestFor(store, "toString")).toBeNull();
+    expect(bestFor(store, "__proto__")).toBeNull();
   });
 });
 
