@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { KEY_GRACE_MS } from "../engine/activation.js";
-import type { Snippet } from "../engine/content/types.js";
+import { LANGUAGE_LABELS, LANGUAGE_ORDER, type Snippet } from "../engine/content/types.js";
 import { isShown, mountApp, pressKey } from "../test/dom.js";
 import { byId } from "./dom.js";
 import { Screens, type ResultData, type ScreenHandlers } from "./screens.js";
@@ -71,6 +71,15 @@ describe("Screens", () => {
   });
 
   describe("start screen", () => {
+    it("offers a pill for every language in the content model, labelled like the HUD", () => {
+      create().showStart();
+      const pills = [...byId("lang-pills").querySelectorAll<HTMLButtonElement>(".pill")];
+      expect(pills.map((b) => b.dataset.id).sort()).toEqual([...LANGUAGE_ORDER].sort());
+      for (const b of pills) {
+        expect(b.textContent).toBe(LANGUAGE_LABELS[b.dataset.id as keyof typeof LANGUAGE_LABELS]);
+      }
+    });
+
     it("shows the start overlay with START focused and defaults selected", () => {
       create().showStart();
       expect(isShown("start-screen")).toBe(true);

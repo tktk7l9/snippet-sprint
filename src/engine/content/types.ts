@@ -7,6 +7,7 @@ export type Language =
   | "rust"
   | "java"
   | "cpp"
+  | "c"
   | "csharp"
   | "swift"
   | "kotlin"
@@ -43,6 +44,7 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   rust: "Rust",
   java: "Java",
   cpp: "C++",
+  c: "C",
   csharp: "C#",
   swift: "Swift",
   kotlin: "Kotlin",
@@ -78,6 +80,7 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "rust",
   "java",
   "cpp",
+  "c",
   "csharp",
   "swift",
   "kotlin",

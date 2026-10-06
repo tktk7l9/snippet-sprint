@@ -53,6 +53,30 @@ describe("content", () => {
     }
   });
 
+  it("uses only printable ASCII and newlines so every character is on a plain keyboard", () => {
+    for (const s of SNIPPETS) expect(/^[\x20-\x7e\n]*$/.test(s.code), s.id).toBe(true);
+  });
+
+  it("has no tabs, trailing spaces or blank lines (indentation is auto-skipped per line)", () => {
+    for (const s of SNIPPETS) {
+      expect(s.code.includes("\t"), s.id).toBe(false);
+      expect(/[ ]+\n/.test(s.code), s.id).toBe(false);
+      expect(s.code.includes("\n\n"), s.id).toBe(false);
+    }
+  });
+
+  it("keeps every line short enough to fit the code panel without wrapping on desktop", () => {
+    for (const s of SNIPPETS) {
+      for (const line of s.code.split("\n")) expect(line.length, s.id).toBeLessThanOrEqual(80);
+    }
+  });
+
+  it("ships at least one snippet for every language offered on the start screen", () => {
+    for (const lang of LANGUAGE_ORDER) {
+      expect(SNIPPETS.some((s) => s.language === lang), lang).toBe(true);
+    }
+  });
+
   it("keeps drills on a single line", () => {
     for (const d of DRILLS) {
       expect(d.code.includes("\n"), d.id).toBe(false);
