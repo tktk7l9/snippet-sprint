@@ -35,6 +35,9 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   lua: { primary: 0x2b3fd0, secondary: 0xb9c2ff }, // Lua navy + moon
   elixir: { primary: 0x6e4a7e, secondary: 0xc9a5e8 }, // Elixir drop violet + lavender
   haskell: { primary: 0x5e5086, secondary: 0x8f4e8b }, // Haskell logo slate + lambda magenta
+  erlang: { primary: 0xa90533, secondary: 0xf2a7b8 }, // Erlang logo red + rose
+  ocaml: { primary: 0xec6813, secondary: 0xf9c38b }, // OCaml camel orange + sand
+  fsharp: { primary: 0x378bba, secondary: 0x30b9db }, // F# logo blues
   html: { primary: 0xe34f26, secondary: 0xf06529 }, // HTML5 orange
   css: { primary: 0x2965f1, secondary: 0x56c5ff }, // CSS3 blue
   drill: { primary: 0x5cf2ff, secondary: 0xc77dff }, // neutral neon
