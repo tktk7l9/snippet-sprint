@@ -24,6 +24,9 @@ export type Language =
   | "lua"
   | "elixir"
   | "haskell"
+  | "erlang"
+  | "ocaml"
+  | "fsharp"
   | "html"
   | "css"
   | "drill";
@@ -70,6 +73,9 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   lua: "Lua",
   elixir: "Elixir",
   haskell: "Haskell",
+  erlang: "Erlang",
+  ocaml: "OCaml",
+  fsharp: "F#",
   html: "HTML",
   css: "CSS",
   drill: "記号",
@@ -115,6 +121,9 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "lua",
   "elixir",
   "haskell",
+  "erlang",
+  "ocaml",
+  "fsharp",
   "html",
   "css",
   "drill",
