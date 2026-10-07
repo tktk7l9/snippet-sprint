@@ -29,9 +29,12 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   php: { primary: 0x777bb4, secondary: 0xb0b3d6 }, // PHP purple
   sql: { primary: 0x00758f, secondary: 0xf29111 }, // MySQL teal + amber
   r: { primary: 0x276dc3, secondary: 0xa9b1bc }, // R blue + grey ring
+  julia: { primary: 0x389826, secondary: 0x9558b2 }, // Julia logo dots: green + purple
   bash: { primary: 0x4eaa25, secondary: 0xa5ff90 }, // terminal green
   perl: { primary: 0x4d5ea8, secondary: 0xd4b483 }, // Perl onion blue + camel sand
   lua: { primary: 0x2b3fd0, secondary: 0xb9c2ff }, // Lua navy + moon
+  elixir: { primary: 0x6e4a7e, secondary: 0xc9a5e8 }, // Elixir drop violet + lavender
+  haskell: { primary: 0x5e5086, secondary: 0x8f4e8b }, // Haskell logo slate + lambda magenta
   html: { primary: 0xe34f26, secondary: 0xf06529 }, // HTML5 orange
   css: { primary: 0x2965f1, secondary: 0x56c5ff }, // CSS3 blue
   drill: { primary: 0x5cf2ff, secondary: 0xc77dff }, // neutral neon
