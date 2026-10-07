@@ -18,9 +18,12 @@ export type Language =
   | "php"
   | "sql"
   | "r"
+  | "julia"
   | "bash"
   | "perl"
   | "lua"
+  | "elixir"
+  | "haskell"
   | "html"
   | "css"
   | "drill";
@@ -61,9 +64,12 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   php: "PHP",
   sql: "SQL",
   r: "R",
+  julia: "Julia",
   bash: "Bash",
   perl: "Perl",
   lua: "Lua",
+  elixir: "Elixir",
+  haskell: "Haskell",
   html: "HTML",
   css: "CSS",
   drill: "記号",
@@ -103,9 +109,12 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "php",
   "sql",
   "r",
+  "julia",
   "bash",
   "perl",
   "lua",
+  "elixir",
+  "haskell",
   "html",
   "css",
   "drill",
