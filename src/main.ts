@@ -27,6 +27,7 @@ const screens = new Screens({
   onRetry: () => game?.retry(),
   onNext: () => game?.next(),
   onMenu: () => game?.menu(),
+  onReload: () => window.location.reload(),
 });
 screens.showStart();
 
@@ -59,7 +60,7 @@ async function boot(cfg: PlayConfig): Promise<void> {
     const [g] = await Promise.all([ensureGame(), loadLanguages(cfg.languages)]);
     g.start(cfg);
   } catch {
-    screens.showStartError("読み込めませんでした。接続を確認して、もう一度 START を押してください。");
+    screens.showStartError("読み込めませんでした。接続を確認して、再読み込みしてください。");
     return;
   }
   warmRest();

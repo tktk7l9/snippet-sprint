@@ -11,7 +11,7 @@ import { Screens, type ResultData, type ScreenHandlers } from "./screens.js";
 const PREFS_KEY = "snippet-sprint:prefs:v1";
 
 function makeHandlers(): ScreenHandlers {
-  return { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn() };
+  return { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn(), onReload: vi.fn() };
 }
 
 function pill(group: string, name: string): HTMLButtonElement {
@@ -278,14 +278,19 @@ describe("Screens", () => {
       expect(ensure).toHaveBeenCalledWith(["go"]);
     });
 
-    it("shows why a round could not start next to START and clears it on the next try", async () => {
+    it("shows why a round could not start next to START, with a reload, and clears both on the next try", async () => {
       const screens = create();
       screens.showStart();
+      expect(byId("start-reload").hidden).toBe(true);
       screens.showStartError("読み込めませんでした");
       expect(screen.getByRole("alert").textContent).toBe("読み込めませんでした");
+      expect(byId("start-reload").hidden).toBe(false);
+      await user.click(screen.getByRole("button", { name: "再読み込み" }));
+      expect(handlers.onReload).toHaveBeenCalledTimes(1);
       await user.click(screen.getByRole("button", { name: "START" }));
       expect(handlers.onStart).toHaveBeenCalledTimes(1);
       expect(screen.getByRole("alert").textContent).toBe("");
+      expect(byId("start-reload").hidden).toBe(true);
     });
   });
 

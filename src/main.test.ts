@@ -158,7 +158,7 @@ describe("main bootstrap", () => {
     expect(mocks.loadLanguages).toHaveBeenCalledWith(["rust"]);
   });
 
-  it("explains next to START when the snippets cannot be fetched, and recovers on the next try", async () => {
+  it("explains next to START when the snippets cannot be fetched, offers a reload, and recovers on the next try", async () => {
     const online = mocks.loadLanguages.getMockImplementation();
     mocks.loadLanguages.mockRejectedValue(new Error("offline"));
     await import("./main.js");
@@ -168,10 +168,17 @@ describe("main bootstrap", () => {
     expect(mocks.controller.start).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toContain("読み込めませんでした");
     expect(isShown("start-screen")).toBe(true);
+    // location.reload is unforgeable in jsdom; swap the whole location global instead.
+    const reload = vi.fn();
+    vi.stubGlobal("location", { href: window.location.href, reload });
+    await user.click(screen.getByRole("button", { name: "再読み込み" }));
+    expect(reload).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
     mocks.loadLanguages.mockImplementation(online!);
     await user.click(screen.getByRole("button", { name: "START" }));
     await flush();
     expect(screen.getByRole("alert").textContent).toBe("");
+    expect(byId("start-reload").hidden).toBe(true);
     expect(mocks.controller.start).toHaveBeenCalledTimes(1);
   });
 

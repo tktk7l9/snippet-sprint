@@ -1,6 +1,8 @@
 // Minimal offline support. Navigations are network-first (so deploys are picked
 // up online) with a cached shell fallback; other same-origin GETs are
-// cache-first with runtime caching (build assets are content-hashed).
+// cache-first with runtime caching (build assets are content-hashed). Snippets
+// load per language, so a language is playable offline once it has been
+// fetched (the app warms the rest in idle time after the first round).
 
 const CACHE = "snippet-sprint-v1";
 const SHELL = ["/", "/index.html", "/favicon.svg", "/manifest.webmanifest"];
@@ -9,7 +11,15 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
+      .then(async (cache) => {
+        await cache.addAll(SHELL);
+        // The hashed entry script and stylesheet named by the shell just cached,
+        // so a fresh install already opens offline (the first page load itself
+        // ran before this worker controlled the page, so it cached nothing).
+        const html = await cache.match("/index.html").then((res) => res.text());
+        const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+        await cache.addAll(assets);
+      })
       .then(() => self.skipWaiting()),
   );
 });
@@ -41,13 +51,14 @@ self.addEventListener("fetch", (event) => {
           }
           return res;
         })
-        .catch(() => caches.match("/index.html")),
+        .catch(() => caches.match("/index.html", { ignoreVary: true })),
     );
     return;
   }
 
   event.respondWith(
-    caches.match(req).then(
+    // Same-origin static files: the cached copy serves any Origin / encoding variant.
+    caches.match(req, { ignoreVary: true }).then(
       (hit) =>
         hit ||
         fetch(req).then((res) => {

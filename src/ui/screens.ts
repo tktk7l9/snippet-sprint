@@ -55,6 +55,8 @@ export interface ScreenHandlers {
   onRetry(): void;
   onNext(): void;
   onMenu(): void;
+  /** Reload the page after a chunk failed to load (a failed module fetch sticks until then). */
+  onReload(): void;
 }
 
 const RANK_COLOR: Record<Rank, string> = {
@@ -89,6 +91,7 @@ export class Screens {
 
   private readonly startBtn = byId<HTMLButtonElement>("start-btn");
   private readonly startError = byId("start-error");
+  private readonly startReload = byId<HTMLButtonElement>("start-reload");
   private readonly langBtns = pills("lang-pills");
   private readonly catBtns = pills("cat-pills");
   private readonly diffBtns = pills("diff-pills");
@@ -145,16 +148,23 @@ export class Screens {
     byId("pause-menu").addEventListener("click", () => handlers.onMenu());
     byId("help-close").addEventListener("click", () => this.hideHelp());
     byId("start-help").addEventListener("click", () => this.showHelp());
+    this.startReload.addEventListener("click", () => handlers.onReload());
   }
 
   private start(handlers: ScreenHandlers): void {
     this.startError.textContent = "";
+    this.startReload.hidden = true;
     handlers.onStart(this.config());
   }
 
-  /** A round could not start (e.g. offline before this language was ever fetched); say so next to START (SHIG 55, 66). */
+  /**
+   * A round could not start (e.g. offline before this language was ever
+   * fetched): say why next to START and offer the way out, a reload, since a
+   * module that failed to fetch stays failed until then (SHIG 55, 66, 60).
+   */
   showStartError(message: string): void {
     this.startError.textContent = message;
+    this.startReload.hidden = false;
   }
 
   config(): PlayConfig {

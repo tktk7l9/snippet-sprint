@@ -12,6 +12,15 @@ describe("public/sw.js", () => {
     expect(sw.match(/if \(res\.ok\)/g)).toHaveLength(2);
   });
 
+  it("precaches the hashed entry script and stylesheet named by the cached shell", () => {
+    expect(sw).toContain('cache.match("/index.html")');
+    expect(sw).toContain('(?:src|href)="(\\/assets\\/[^"]+)"');
+  });
+
+  it("serves cached files whatever the Vary header says (module scripts send an Origin header, the precache did not)", () => {
+    expect(sw.match(/caches\.match\([^)]*\{ ignoreVary: true \}\)/g)).toHaveLength(2);
+  });
+
   it("deletes caches from older versions on activate", () => {
     expect(sw).toContain("keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))");
   });

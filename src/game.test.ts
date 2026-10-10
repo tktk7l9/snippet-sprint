@@ -78,7 +78,7 @@ class SilentAudioContext {
 interface Harness {
   screens: Screens;
   game: import("./game.js").GameController;
-  handlers: { onStart: ReturnType<typeof vi.fn>; onRetry: ReturnType<typeof vi.fn>; onNext: ReturnType<typeof vi.fn>; onMenu: ReturnType<typeof vi.fn> };
+  handlers: { onStart: ReturnType<typeof vi.fn>; onRetry: ReturnType<typeof vi.fn>; onNext: ReturnType<typeof vi.fn>; onMenu: ReturnType<typeof vi.fn>; onReload: ReturnType<typeof vi.fn> };
   /** Run one animation frame at the current clock. */
   frame(): void;
   tick(ms: number): void;
@@ -90,7 +90,7 @@ let frameCb: FrameRequestCallback | null = null;
 async function boot(opts: { touch?: boolean } = {}): Promise<Harness> {
   mountApp();
   stubMatchMedia(opts.touch ? ["(pointer: coarse)"] : []);
-  const handlers = { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn() };
+  const handlers = { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn(), onReload: vi.fn() };
   const screens = new Screens(handlers);
   screens.showStart();
   const { createGame } = await import("./game.js");
