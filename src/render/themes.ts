@@ -20,6 +20,7 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   cpp: { primary: 0x00599c, secondary: 0x659ad2 }, // C++ blue
   c: { primary: 0xa8b9cc, secondary: 0x5c6bc0 }, // C grey-blue
   zig: { primary: 0xf7a41d, secondary: 0xffd27f }, // Zig amber
+  fortran: { primary: 0x734f96, secondary: 0xb79ad0 }, // Fortran logo purple + lilac
   csharp: { primary: 0x512bd4, secondary: 0x9d7be8 }, // .NET purple
   swift: { primary: 0xf05138, secondary: 0xfb9c86 }, // Swift orange
   kotlin: { primary: 0x7f52ff, secondary: 0xf88909 }, // Kotlin purple + orange
@@ -31,8 +32,10 @@ export const LANGUAGE_THEME: Record<Language, Theme> = {
   r: { primary: 0x276dc3, secondary: 0xa9b1bc }, // R blue + grey ring
   julia: { primary: 0x389826, secondary: 0x9558b2 }, // Julia logo dots: green + purple
   bash: { primary: 0x4eaa25, secondary: 0xa5ff90 }, // terminal green
+  powershell: { primary: 0x2b6fd4, secondary: 0x8fc1ff }, // PowerShell logo blue + light blue
   perl: { primary: 0x4d5ea8, secondary: 0xd4b483 }, // Perl onion blue + camel sand
   lua: { primary: 0x2b3fd0, secondary: 0xb9c2ff }, // Lua navy + moon
+  groovy: { primary: 0x4298b8, secondary: 0x7fcbe6 }, // Groovy logo teal-blue + sky
   elixir: { primary: 0x6e4a7e, secondary: 0xc9a5e8 }, // Elixir drop violet + lavender
   haskell: { primary: 0x5e5086, secondary: 0x8f4e8b }, // Haskell logo slate + lambda magenta
   erlang: { primary: 0xa90533, secondary: 0xf2a7b8 }, // Erlang logo red + rose

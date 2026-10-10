@@ -9,6 +9,7 @@ export type Language =
   | "cpp"
   | "c"
   | "zig"
+  | "fortran"
   | "csharp"
   | "swift"
   | "kotlin"
@@ -20,8 +21,10 @@ export type Language =
   | "r"
   | "julia"
   | "bash"
+  | "powershell"
   | "perl"
   | "lua"
+  | "groovy"
   | "elixir"
   | "haskell"
   | "erlang"
@@ -58,6 +61,7 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   cpp: "C++",
   c: "C",
   zig: "Zig",
+  fortran: "Fortran",
   csharp: "C#",
   swift: "Swift",
   kotlin: "Kotlin",
@@ -69,8 +73,10 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   r: "R",
   julia: "Julia",
   bash: "Bash",
+  powershell: "PowerShell",
   perl: "Perl",
   lua: "Lua",
+  groovy: "Groovy",
   elixir: "Elixir",
   haskell: "Haskell",
   erlang: "Erlang",
@@ -106,6 +112,7 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "cpp",
   "c",
   "zig",
+  "fortran",
   "csharp",
   "swift",
   "kotlin",
@@ -117,8 +124,10 @@ export const LANGUAGE_ORDER: readonly Language[] = [
   "r",
   "julia",
   "bash",
+  "powershell",
   "perl",
   "lua",
+  "groovy",
   "elixir",
   "haskell",
   "erlang",
