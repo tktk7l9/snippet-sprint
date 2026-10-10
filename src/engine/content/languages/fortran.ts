@@ -173,7 +173,7 @@ export const SNIPPETS: Snippet[] = [
     difficulty: "medium",
     label: "do concurrent",
     description: "反復どうしに依存が無いことを示して並列化を許す do concurrent",
-    code: j("do concurrent (i = 1:n)", "  y(i) = 2.0 * x(i) + 1.0", "end do"),
+    code: j("do concurrent(i=1:n)", "  y(i) = 2.0 * x(i) + 1.0", "end do"),
   },
   {
     id: "fortran-openmp",

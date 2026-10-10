@@ -178,11 +178,11 @@ export const SNIPPETS: Snippet[] = [
     category: "functions",
     difficulty: "medium",
     label: "it + tally",
-    description: "tally で数え、ブロックの暗黙引数 it で最多のものを選ぶ（Ruby 3.4）",
+    description: "tally で数え、ブロックの暗黙引数 it で多い順に並べて整形する（Ruby 3.4）",
     code: j(
       "words = %w[go rust go ruby rust go]",
-      "top = words.tally.max_by { it.last }",
-      'puts "#{top.first} x#{top.last}"',
+      "ranking = words.tally.sort_by { -it.last }",
+      'puts ranking.map { "#{it.first} x#{it.last}" }.join(", ")',
     ),
   },
   {
