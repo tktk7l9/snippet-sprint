@@ -7,8 +7,8 @@
 ## 特徴
 
 - **strict モード** — 表示されたコードを左から1文字ずつ。正しい文字だけが先に進み、誤打はミスとして記録される。
-- **29 言語・計 491 問** — TS/JS・Python・Go・Rust・Java・C++・C・Zig・C#・Swift・Kotlin・Dart・Scala・Ruby・PHP・SQL・R・Julia・Bash・Perl・Lua・Elixir・Haskell・Erlang・OCaml・F#・HTML・CSS の頻出パターン（基本構文・関数・制御フロー・非同期）、二分探索・クイックソート・DP・Kadane・DFS・挿入ソート・連結リスト反転・マージソート・繰り返し二乗法・Fisher–Yates シャッフル・ブートストラップ法・シュワルツ変換・ランレングス符号化・二分探索木への挿入・ニュートン法・順列の列挙・ハノイの塔・素因数分解などの有名アルゴリズム、`=> === && || {} []` や正規表現・クォート・ラムダ・ビット演算・エスケープ・書式指定子などの記号ドリル。デフォルトは TS/JS のみ選択（スタート画面で自由に増減）。
-- **言語別テーマ背景** — いま打っている言語のブランドカラーに、WebGL 背景（星雲・トンネル・コア・フォグ）と画面のグラデーションがスムーズに変化（TS=青 / Python=青+黄 / Go=シアン / Rust=オレンジ / C=グレーブルー / Zig=アンバー / Ruby=赤 / Swift=橙 / Kotlin=紫 / Dart=青+水色 / R=青+グレー / Julia=緑+紫 / Lua=紺 / Elixir=紫+ラベンダー / Erlang=赤 / OCaml=オレンジ / F#=青+水色 / Bash=ターミナル緑 など）。
+- **32 言語・計 549 問** — TS/JS・Python・Go・Rust・Java・C++・C・Zig・Fortran・C#・Swift・Kotlin・Dart・Scala・Ruby・PHP・SQL・R・Julia・Bash・PowerShell・Perl・Lua・Groovy・Elixir・Haskell・Erlang・OCaml・F#・HTML・CSS の頻出パターン（基本構文・関数・制御フロー・非同期）、二分探索・クイックソート・DP・Kadane・DFS・挿入ソート・連結リスト反転・マージソート・繰り返し二乗法・Fisher–Yates シャッフル・ブートストラップ法・シュワルツ変換・ランレングス符号化・二分探索木への挿入・ニュートン法・順列の列挙・ハノイの塔・素因数分解・Luhn チェックサム・ローマ数字・台形公式などの有名アルゴリズム、`=> === && || {} []` や正規表現・クォート・ラムダ・ビット演算・エスケープ・書式指定子などの記号ドリル。デフォルトは TS/JS のみ選択（スタート画面で自由に増減）。
+- **言語別テーマ背景** — いま打っている言語のブランドカラーに、WebGL 背景（星雲・トンネル・コア・フォグ）と画面のグラデーションがスムーズに変化（TS=青 / Python=青+黄 / Go=シアン / Rust=オレンジ / C=グレーブルー / Zig=アンバー / Ruby=赤 / Swift=橙 / Kotlin=紫 / Dart=青+水色 / R=青+グレー / Julia=緑+紫 / Lua=紺 / Elixir=紫+ラベンダー / Erlang=赤 / OCaml=オレンジ / F#=青+水色 / Fortran=紫 / PowerShell=青 / Groovy=青緑 / Bash=ターミナル緑 など）。
 - **弱点分析** — クリア後に WPM・正確率・スコア・ランク（S〜D）と、どの記号でつまずいたかを可視化。
 - **自己ベスト保存** — スニペットごとのベストを `localStorage` に記録。
 - **自動インデント** — `Enter` を打つと次の行の先頭インデントは自動でスキップ。
