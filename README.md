@@ -47,7 +47,7 @@ npm run build       # 型チェック + 本番ビルド
 ### 構成
 
 - `src/engine/` — 純ロジック（タイピング判定 / 統計 / スコア / 選曲 / 記録 / コンテンツ）。Vitest で 100% カバレッジを維持。
-- `src/engine/content/languages/` — スニペット本体。1 言語 1 ファイル（記号ドリルは `drill.ts`）で、`content/index.ts` が `import()` で遅延読込する。言語を足すときは `types.ts` の `Language` と `LANGUAGE_ORDER`・ローダー・テーマ色・スタート画面のピル・README を更新する（テストが突き合わせる）。
+- `src/engine/content/languages/` — スニペット本体。1 言語 1 ファイル（記号ドリルは `drill.ts`）で、`content/index.ts` が `import()` で遅延読込する。言語を足すときは `types.ts` の `Language` と `LANGUAGE_ORDER`・ローダー・テーマ色・スタート画面のピル・README を更新する（テストが突き合わせる）。問題数や言語数が変わったら、README・ヘルプ・`index.html` の説明文（description / OG / Twitter）の数も直す（同じくテストが突き合わせる）。
 - `src/modes/` — ゲームモード（`sprint`）と共通インターフェース。`game.ts` が共有サービス（描画・音・統計・結果）を持ち、モードを駆動。
 - `src/render/` — Three.js（レンダラ + ブルーム / 反応するステージ / エフェクト）。
 - `src/input/` — 物理キーボード / モバイルソフトキーボード。
