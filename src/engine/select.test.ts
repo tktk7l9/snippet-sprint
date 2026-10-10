@@ -75,8 +75,12 @@ describe("selectSnippet", () => {
     expect(s.id).toBe("c");
   });
 
-  it("uses the bundled snippets and Math.random by default", () => {
-    const s = selectSnippet({ languages: ["ts"], difficulty: "mixed", category: "all" });
-    expect(s.language).toBe("ts");
+  it("uses Math.random by default", () => {
+    const s = selectSnippet({ languages: ["ts"], difficulty: "mixed", category: "all" }, pool);
+    expect(["a", "b"]).toContain(s.id);
+  });
+
+  it("refuses an empty pool instead of returning nothing", () => {
+    expect(() => selectSnippet({ languages: ["ts"], difficulty: "mixed", category: "all" }, [])).toThrow(/empty pool/);
   });
 });

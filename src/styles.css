@@ -416,6 +416,15 @@ kbd {
   color: var(--accent);
   margin-top: 6px;
 }
+/* Why START did nothing, right where it was pressed (SHIG 55, 66). Empty until needed. */
+#start-error {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--err);
+  max-width: 32em;
+  text-align: center;
+}
+#start-error:empty { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .codepre.shake, .pill.shake { animation: none; }

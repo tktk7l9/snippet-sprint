@@ -1,21 +1,52 @@
-import { describe, expect, it } from "vitest";
-import { ALGORITHMS, CODE_SNIPPETS, DRILLS, SNIPPETS } from "./content/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
+import html from "../../index.html?raw";
+import readme from "../../README.md?raw";
+import { isLoaded, loadAll, loadLanguage, loadLanguages, poolFor, warmAll } from "./content/index.js";
 import {
   CATEGORY_LABELS,
   DIFFICULTY_LABELS,
   LANGUAGE_LABELS,
   LANGUAGE_ORDER,
+  type Language,
+  type Snippet,
 } from "./content/types.js";
 
-describe("content", () => {
-  it("combines code snippets, algorithms and drills", () => {
-    expect(SNIPPETS).toHaveLength(CODE_SNIPPETS.length + ALGORITHMS.length + DRILLS.length);
-    expect(SNIPPETS.length).toBeGreaterThan(0);
+let SNIPPETS: Snippet[] = [];
+const byLanguage = new Map<Language, Snippet[]>();
+
+beforeAll(async () => {
+  SNIPPETS = await loadAll();
+  for (const lang of LANGUAGE_ORDER) byLanguage.set(lang, await loadLanguage(lang));
+});
+
+describe("loader", () => {
+  it("serves a language from its own module, cached after the first load", async () => {
+    const first = await loadLanguage("ts");
+    expect(first.length).toBeGreaterThan(0);
+    expect(await loadLanguage("ts")).toBe(first);
+    expect(isLoaded(["ts", "py"])).toBe(true);
   });
 
-  it("ships algorithm snippets tagged with the algo category", () => {
-    expect(ALGORITHMS.length).toBeGreaterThan(0);
-    for (const a of ALGORITHMS) expect(a.category).toBe("algo");
+  it("combines the chosen languages in start-screen order, whatever order they were picked in", async () => {
+    const pool = await loadLanguages(["py", "ts"]);
+    expect(pool).toEqual([...byLanguage.get("ts")!, ...byLanguage.get("py")!]);
+    expect(poolFor(["py", "ts"])).toEqual(pool);
+    expect(poolFor([])).toEqual([]);
+  });
+
+  it("loadAll covers every language and warmAll is a no-op once everything is in", async () => {
+    expect(SNIPPETS).toHaveLength([...byLanguage.values()].reduce((n, xs) => n + xs.length, 0));
+    await warmAll();
+    expect(isLoaded(LANGUAGE_ORDER)).toBe(true);
+  });
+});
+
+describe("content", () => {
+  it("files every snippet under the module of its own language", () => {
+    for (const [lang, list] of byLanguage) {
+      expect(list.length, lang).toBeGreaterThan(0);
+      for (const s of list) expect(s.language, s.id).toBe(lang);
+    }
   });
 
   it("has unique ids", () => {
@@ -71,16 +102,23 @@ describe("content", () => {
     }
   });
 
-  it("ships at least one snippet for every language offered on the start screen", () => {
-    for (const lang of LANGUAGE_ORDER) {
-      expect(SNIPPETS.some((s) => s.language === lang), lang).toBe(true);
+  it("keeps drills single-line and the only snippets in the drill category", () => {
+    for (const s of SNIPPETS) {
+      expect(s.category === "drill", s.id).toBe(s.language === "drill");
+      if (s.language === "drill") expect(s.code.includes("\n"), s.id).toBe(false);
     }
   });
 
-  it("keeps drills on a single line", () => {
-    for (const d of DRILLS) {
-      expect(d.code.includes("\n"), d.id).toBe(false);
-      expect(d.language).toBe("drill");
-    }
+  it("offers every language as a start-screen pill, and nothing else", () => {
+    const pills = [...html.matchAll(/class="pill(?: active)?" type="button" data-id="([a-z]+)"/g)].map((m) => m[1]);
+    const langPills = pills.filter((id) => LANGUAGE_ORDER.includes(id as Language));
+    expect([...langPills].sort()).toEqual([...LANGUAGE_ORDER].sort());
+  });
+
+  it("states the language count correctly in the help text and README", () => {
+    const languages = LANGUAGE_ORDER.length - 1; // the drills are listed apart
+    expect(html).toContain(`の${languages}言語と記号ドリル`);
+    expect(html).toContain(`even below ${languages} language pills`);
+    expect(readme).toContain(`**${LANGUAGE_ORDER.length} 言語・計 ${SNIPPETS.length} 問**`);
   });
 });

@@ -1,5 +1,6 @@
 // Snippet Sprint: type one whole snippet, measured for WPM / accuracy / rank.
 
+import { poolFor } from "../engine/content/index.js";
 import type { Snippet } from "../engine/content/types.js";
 import { selectSnippet } from "../engine/select.js";
 import { computeScore } from "../engine/scoring.js";
@@ -16,14 +17,18 @@ export class SprintMode implements GameMode {
 
   constructor(private readonly services: ModeServices) {}
 
+  /** The caller has loaded `config.languages` (main.ts awaits it before a round starts). */
   begin(config: PlayConfig, replay = false): void {
-    const next = selectSnippet({
-      languages: config.languages,
-      difficulty: config.difficulty,
-      category: config.category,
-      excludeId: this.current?.id,
-      replayId: replay ? this.current?.id : undefined,
-    });
+    const next = selectSnippet(
+      {
+        languages: config.languages,
+        difficulty: config.difficulty,
+        category: config.category,
+        excludeId: this.current?.id,
+        replayId: replay ? this.current?.id : undefined,
+      },
+      poolFor(config.languages),
+    );
     this.load(next);
   }
 

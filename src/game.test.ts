@@ -260,13 +260,14 @@ describe("createGame", () => {
     const results = within(byId("results"));
     h.tick(1000);
     await user.click(results.getByRole("button", { name: "RETRY" }));
-    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }));
+    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }), expect.any(Array));
     expect(isShown("play-hud")).toBe(true);
     typeAll("ab");
     h.tick(1000);
     await user.click(results.getByRole("button", { name: "NEXT" }));
     expect(mocks.selectSnippet).toHaveBeenLastCalledWith(
       expect.objectContaining({ excludeId: "fixture", replayId: undefined }),
+      expect.any(Array),
     );
     expect(isShown("results")).toBe(false);
   });
@@ -313,7 +314,7 @@ describe("createGame", () => {
     pressKey("Escape");
     await user.click(within(byId("pause-overlay")).getByRole("button", { name: "RETRY" }));
     expect(isShown("pause-overlay")).toBe(false);
-    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }));
+    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }), expect.any(Array));
     expect(byId("progress-fill").style.width).toBe("0%");
   });
 
@@ -324,7 +325,7 @@ describe("createGame", () => {
     pressKey("Tab");
     expect(byId("progress-fill").style.width).toBe("0%");
     expect(byId("stat-combo").textContent).toBe("0");
-    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }));
+    expect(mocks.selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ replayId: "fixture" }), expect.any(Array));
   });
 
   it("losing focus or hiding the tab auto-pauses, but only while playing", async () => {

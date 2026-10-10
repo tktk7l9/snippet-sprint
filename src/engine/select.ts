@@ -1,7 +1,7 @@
 // Snippet selection. Filters are "soft": each filter narrows the pool but never
 // empties it (it falls back to the wider set), so a play session is always served.
+// The pool is whatever the caller has loaded (see content/index.ts).
 
-import { SNIPPETS } from "./content/index.js";
 import type { Category, Difficulty, Language, Snippet } from "./content/types.js";
 
 export interface SelectOptions {
@@ -17,10 +17,8 @@ export interface SelectOptions {
   readonly rng?: () => number;
 }
 
-export function selectSnippet(
-  opts: SelectOptions,
-  pool: Snippet[] = SNIPPETS,
-): Snippet {
+export function selectSnippet(opts: SelectOptions, pool: readonly Snippet[]): Snippet {
+  if (pool.length === 0) throw new Error("selectSnippet: empty pool (load the languages first)");
   const rng = opts.rng ?? Math.random;
 
   if (opts.replayId) {

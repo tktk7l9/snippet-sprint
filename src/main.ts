@@ -2,6 +2,8 @@
 // Three.js-heavy game runtime is loaded on demand (and warmed during idle).
 
 import "./styles.css";
+import { availableCategories, availableDifficulties } from "./engine/availability.js";
+import { isLoaded, loadLanguages, poolFor, warmAll } from "./engine/content/index.js";
 import { Screens } from "./ui/screens.js";
 import type { GameController } from "./game.js";
 import type { PlayConfig } from "./modes/types.js";
@@ -18,6 +20,7 @@ if (import.meta.env.PROD) {
 
 let game: GameController | null = null;
 let loading: Promise<GameController> | null = null;
+let warmed = false;
 
 const screens = new Screens({
   onStart: (cfg) => void boot(cfg),
@@ -27,30 +30,58 @@ const screens = new Screens({
 });
 screens.showStart();
 
-async function ensureGame(): Promise<GameController> {
-  if (game) return game;
-  if (!loading) loading = import("./game.js").then((m) => m.createGame(screens));
-  game = await loading;
-  return game;
+function ensureGame(): Promise<GameController> {
+  loading ??= import("./game.js")
+    .then((m) => (game = m.createGame(screens)))
+    .catch((e: unknown) => {
+      loading = null; // a failed fetch (offline) must not poison every later START
+      throw e;
+    });
+  return loading;
+}
+
+/**
+ * Fetch the rest of the languages one at a time once the player is busy with a
+ * round, so offline play keeps working for every language after one session
+ * (the service worker caches each chunk). Skipped under Save-Data.
+ */
+function warmRest(): void {
+  if (warmed) return;
+  warmed = true;
+  if ((navigator as { connection?: { saveData?: boolean } }).connection?.saveData) return;
+  const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2000));
+  idle(() => void warmAll().catch(() => (warmed = false)));
 }
 
 async function boot(cfg: PlayConfig): Promise<void> {
-  (await ensureGame()).start(cfg);
+  try {
+    // The round waits only for the chosen languages; the Three.js chunk loads alongside.
+    const [g] = await Promise.all([ensureGame(), loadLanguages(cfg.languages)]);
+    g.start(cfg);
+  } catch {
+    screens.showStartError("読み込めませんでした。接続を確認して、もう一度 START を押してください。");
+    return;
+  }
+  warmRest();
 }
 
 // Warm the game chunk on the first user interaction so START is instant — but
 // not during an idle cold load, which keeps the initial bundle light for
 // Lighthouse (the Three.js chunk only loads once the user actually engages).
 const warm = (): void => {
-  void ensureGame();
-  // Filter feasibility needs the snippet data, so it rides along with the game
-  // chunk's warm-up instead of bloating the initial bundle.
-  void import("./engine/availability.js").then((m) =>
-    screens.setAvailability({
-      categories: (langs) => m.availableCategories(langs),
-      difficulties: (langs, cat) => m.availableDifficulties(langs, cat),
-    }),
-  );
+  void ensureGame().catch(() => {});
+  // Filter feasibility needs the snippet data, which loads per language on
+  // demand (Screens asks `ensure` for the selection and re-syncs when it lands).
+  screens.setAvailability({
+    categories: (langs) => (isLoaded(langs) ? availableCategories(langs, poolFor(langs)) : null),
+    // Only asked once `categories` answered, i.e. the same languages are loaded.
+    difficulties: (langs, cat) => availableDifficulties(langs, cat, poolFor(langs)),
+    ensure: (langs) =>
+      loadLanguages(langs).then(
+        () => true,
+        () => false, // offline before this language was cached: filters simply stay open
+      ),
+  });
 };
 window.addEventListener("pointerdown", warm, { once: true });
 window.addEventListener("keydown", warm, { once: true });

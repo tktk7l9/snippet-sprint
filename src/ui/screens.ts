@@ -38,10 +38,16 @@ export interface ResultData {
   snippet: Snippet;
 }
 
-/** Filter feasibility, injected lazily so the snippet data stays out of the initial bundle. */
+/**
+ * Filter feasibility, injected lazily so the snippet data stays out of the
+ * initial bundle. Snippets load per language, so the answer is `null` while a
+ * chosen language is still on its way; `ensure` resolves once it is in.
+ */
 export interface Availability {
-  categories(languages: readonly Language[]): Set<Category>;
-  difficulties(languages: readonly Language[], category: Category | "all"): Set<Difficulty>;
+  categories(languages: readonly Language[]): Set<Category> | null;
+  difficulties(languages: readonly Language[], category: Category | "all"): Set<Difficulty> | null;
+  /** Load these languages' snippets; resolves to whether they are now in memory (never rejects). */
+  ensure(languages: readonly Language[]): Promise<boolean>;
 }
 
 export interface ScreenHandlers {
@@ -82,6 +88,7 @@ export class Screens {
   private readonly helpEl = byId("help-overlay");
 
   private readonly startBtn = byId<HTMLButtonElement>("start-btn");
+  private readonly startError = byId("start-error");
   private readonly langBtns = pills("lang-pills");
   private readonly catBtns = pills("cat-pills");
   private readonly diffBtns = pills("diff-pills");
@@ -105,7 +112,7 @@ export class Screens {
     this.bindLangs();
     this.syncPills();
 
-    this.startBtn.addEventListener("click", () => handlers.onStart(this.config()));
+    this.startBtn.addEventListener("click", () => this.start(handlers));
     // The hint promises "Enter to start"; keep that true after a click on the
     // background has moved focus off START (SHIG 22, 47).
     window.addEventListener("keydown", (e) => {
@@ -117,7 +124,7 @@ export class Screens {
       // The game's own keydown listener runs after this one; without this it
       // would see the same Enter as the first typed character once play starts.
       e.stopImmediatePropagation();
-      handlers.onStart(this.config());
+      this.start(handlers);
     });
     // Esc closes help outside a run; in-game Esc is owned by the keyboard handler (SHIG 60).
     window.addEventListener("keydown", (e) => {
@@ -138,6 +145,16 @@ export class Screens {
     byId("pause-menu").addEventListener("click", () => handlers.onMenu());
     byId("help-close").addEventListener("click", () => this.hideHelp());
     byId("start-help").addEventListener("click", () => this.showHelp());
+  }
+
+  private start(handlers: ScreenHandlers): void {
+    this.startError.textContent = "";
+    handlers.onStart(this.config());
+  }
+
+  /** A round could not start (e.g. offline before this language was ever fetched); say so next to START (SHIG 55, 66). */
+  showStartError(message: string): void {
+    this.startError.textContent = message;
   }
 
   config(): PlayConfig {
@@ -226,6 +243,11 @@ export class Screens {
   private bindLangs(): void {
     for (const btn of this.langBtns) {
       const id = (btn.dataset.id ?? "") as Language;
+      // Hovering or tabbing onto a pill is a strong hint it will be picked: fetch
+      // its snippets now so the filters and START need no wait later.
+      const prefetch = (): void => void this.availability?.ensure([id]);
+      btn.addEventListener("pointerenter", prefetch);
+      btn.addEventListener("focus", prefetch);
       btn.addEventListener("click", (e) => {
         if (this.selectedLangs.has(id)) {
           if (this.selectedLangs.size === 1) {
@@ -264,9 +286,17 @@ export class Screens {
    */
   private syncPills(): void {
     const langs = [...this.selectedLangs];
-    const cats = this.availability?.categories(langs);
+    const avail = this.availability;
+    const cats = avail?.categories(langs) ?? null;
+    // Unknown while a language loads: leave every filter enabled rather than
+    // flicker, and run again once the data is in (SHIG 90, 65).
+    if (avail && !cats) {
+      void avail.ensure(langs).then((ready) => {
+        if (ready) this.syncPills();
+      });
+    }
     if (cats && this.category !== "all" && !cats.has(this.category)) this.category = "all";
-    const diffs = this.availability?.difficulties(langs, this.category);
+    const diffs = cats ? avail!.difficulties(langs, this.category) : null;
     if (diffs && this.difficulty !== "mixed" && !diffs.has(this.difficulty)) this.difficulty = "mixed";
 
     for (const btn of this.langBtns) {
