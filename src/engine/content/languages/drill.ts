@@ -1,8 +1,9 @@
-import type { Snippet } from "./types.js";
+import type { Snippet } from "../types.js";
 
 // Symbol / operator drills: single-line repetition of the punctuation that
-// trips up code typing. Language is "drill", category "drill".
-export const DRILLS: Snippet[] = [
+// trips up code typing. Loaded on demand like a language.
+
+export const SNIPPETS: Snippet[] = [
   {
     id: "drill-arrows",
     language: "drill",

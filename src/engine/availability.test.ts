@@ -20,9 +20,6 @@ describe("availableCategories", () => {
     expect(availableCategories(["drill"], pool).has("drill")).toBe(true);
   });
 
-  it("uses the bundled snippets by default", () => {
-    expect(availableCategories(["ts"]).has("basics")).toBe(true);
-  });
 });
 
 describe("availableDifficulties", () => {
@@ -39,7 +36,4 @@ describe("availableDifficulties", () => {
     expect(availableDifficulties(["sql"], "async", pool).size).toBe(0);
   });
 
-  it("uses the bundled snippets by default", () => {
-    expect(availableDifficulties(["ts"], "all").size).toBeGreaterThan(0);
-  });
 });

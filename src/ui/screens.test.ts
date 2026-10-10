@@ -11,7 +11,7 @@ import { Screens, type ResultData, type ScreenHandlers } from "./screens.js";
 const PREFS_KEY = "snippet-sprint:prefs:v1";
 
 function makeHandlers(): ScreenHandlers {
-  return { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn() };
+  return { onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn(), onReload: vi.fn() };
 }
 
 function pill(group: string, name: string): HTMLButtonElement {
@@ -207,6 +207,7 @@ describe("Screens", () => {
       screens.setAvailability({
         categories: () => new Set(["basics", "flow"]),
         difficulties: () => new Set(["easy"]),
+        ensure: () => Promise.resolve(true),
       });
       expect(pill("cat-pills", "Algorithms").disabled).toBe(true);
       expect(pill("cat-pills", "Basics").disabled).toBe(false);
@@ -224,11 +225,72 @@ describe("Screens", () => {
       const difficulties = vi.fn((_langs: readonly string[], cat: string) =>
         cat === "flow" ? new Set(["hard" as const]) : new Set(["easy" as const, "hard" as const]),
       );
-      screens.setAvailability({ categories: () => new Set(["flow", "basics"]), difficulties });
+      screens.setAvailability({ categories: () => new Set(["flow", "basics"]), difficulties, ensure: () => Promise.resolve(true) });
       await user.click(pill("cat-pills", "Flow"));
       expect(difficulties).toHaveBeenLastCalledWith(["ts"], "flow");
       expect(pill("diff-pills", "Easy").disabled).toBe(true);
       expect(pill("diff-pills", "Hard").disabled).toBe(false);
+    });
+  });
+
+  describe("lazy snippet data", () => {
+    it("keeps every filter open when a language fails to load (offline), without asking again", async () => {
+      const screens = create();
+      screens.showStart();
+      const ensure = vi.fn(() => Promise.resolve(false));
+      screens.setAvailability({ categories: () => null, difficulties: () => null, ensure });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(ensure).toHaveBeenCalledTimes(1);
+      expect(pill("cat-pills", "Algorithms").disabled).toBe(false);
+    });
+
+    it("keeps every filter open while a language loads, then applies feasibility", async () => {
+      const screens = create();
+      screens.showStart();
+      let ready = false;
+      let release: () => void = () => {};
+      const ensure = vi.fn(() => new Promise<boolean>((r) => (release = () => r(true))));
+      screens.setAvailability({
+        categories: () => (ready ? new Set(["basics"]) : null),
+        difficulties: () => (ready ? new Set(["easy"]) : null),
+        ensure,
+      });
+      expect(ensure).toHaveBeenCalledWith(["ts"]);
+      expect(pill("cat-pills", "Algorithms").disabled).toBe(false);
+      expect(pill("diff-pills", "Hard").disabled).toBe(false);
+      ready = true;
+      release();
+      await Promise.resolve();
+      expect(pill("cat-pills", "Algorithms").disabled).toBe(true);
+      expect(pill("diff-pills", "Hard").disabled).toBe(true);
+    });
+
+    it("prefetches a language when its pill is hovered or focused", async () => {
+      const screens = create();
+      screens.showStart();
+      const ensure = vi.fn(() => Promise.resolve(true));
+      screens.setAvailability({ categories: () => new Set(["basics"]), difficulties: () => new Set(["easy"]), ensure });
+      ensure.mockClear();
+      await user.hover(pill("lang-pills", "Rust"));
+      expect(ensure).toHaveBeenCalledWith(["rust"]);
+      pill("lang-pills", "Go").focus();
+      expect(ensure).toHaveBeenCalledWith(["go"]);
+    });
+
+    it("shows why a round could not start next to START, with a reload, and clears both on the next try", async () => {
+      const screens = create();
+      screens.showStart();
+      expect(byId("start-reload").hidden).toBe(true);
+      screens.showStartError("読み込めませんでした");
+      expect(screen.getByRole("alert").textContent).toBe("読み込めませんでした");
+      expect(byId("start-reload").hidden).toBe(false);
+      await user.click(screen.getByRole("button", { name: "再読み込み" }));
+      expect(handlers.onReload).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole("button", { name: "START" }));
+      expect(handlers.onStart).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("alert").textContent).toBe("");
+      expect(byId("start-reload").hidden).toBe(true);
     });
   });
 

@@ -20,6 +20,8 @@ const snippetB: Snippet = { ...snippetA, id: "b", language: "py", description: "
 
 const selectSnippet = vi.hoisted(() => vi.fn());
 vi.mock("../engine/select.js", () => ({ selectSnippet }));
+const loaded = vi.hoisted(() => vi.fn());
+vi.mock("../engine/content/index.js", () => ({ poolFor: loaded }));
 
 const config: PlayConfig = { languages: ["ts"], difficulty: "mixed", category: "all" };
 
@@ -53,20 +55,25 @@ describe("SprintMode", () => {
   beforeEach(() => {
     mountApp();
     selectSnippet.mockReset().mockReturnValue(snippetA);
+    loaded.mockReset().mockReturnValue([snippetA, snippetB]);
     env = makeServices();
     mode = new SprintMode(env.services);
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it("begin loads a snippet into the HUD and shows it", () => {
+  it("begin draws from the loaded pool of the chosen languages and shows the snippet", () => {
     mode.begin(config);
-    expect(selectSnippet).toHaveBeenCalledWith({
-      languages: ["ts"],
-      difficulty: "mixed",
-      category: "all",
-      excludeId: undefined,
-      replayId: undefined,
-    });
+    expect(loaded).toHaveBeenCalledWith(["ts"]);
+    expect(selectSnippet).toHaveBeenCalledWith(
+      {
+        languages: ["ts"],
+        difficulty: "mixed",
+        category: "all",
+        excludeId: undefined,
+        replayId: undefined,
+      },
+      [snippetA, snippetB],
+    );
     expect(isShown("sprint-view")).toBe(true);
     expect(byId("meta-lang").textContent).toBe("TS/JS");
     expect(byId("meta-cat").textContent).toBe("Basics · Easy");
@@ -81,10 +88,10 @@ describe("SprintMode", () => {
     mode.begin(config);
     selectSnippet.mockReturnValue(snippetB);
     mode.begin(config);
-    expect(selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ excludeId: "a", replayId: undefined }));
+    expect(selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ excludeId: "a", replayId: undefined }), [snippetA, snippetB]);
     expect(byId("meta-lang").textContent).toBe("Python");
     mode.begin(config, true);
-    expect(selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ excludeId: "b", replayId: "b" }));
+    expect(selectSnippet).toHaveBeenLastCalledWith(expect.objectContaining({ excludeId: "b", replayId: "b" }), [snippetA, snippetB]);
   });
 
   it("a correct key advances, sparks, clicks and updates the HUD", () => {
