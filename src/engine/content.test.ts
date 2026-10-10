@@ -121,4 +121,13 @@ describe("content", () => {
     expect(html).toContain(`even below ${languages} language pills`);
     expect(readme).toContain(`**${LANGUAGE_ORDER.length} 言語・計 ${SNIPPETS.length} 問**`);
   });
+
+  it("states the language and snippet counts in the search and share descriptions", () => {
+    const languages = LANGUAGE_ORDER.length - 1; // the drills are listed apart
+    const descriptions = [
+      ...html.matchAll(/<meta (?:name|property)="(?:description|og:description|twitter:description)" content="([^"]*)"/g),
+    ].map((m) => m[1]);
+    expect(descriptions).toHaveLength(3);
+    for (const d of descriptions) expect(d).toContain(`${languages}言語と記号ドリルの計${SNIPPETS.length}問`);
+  });
 });
