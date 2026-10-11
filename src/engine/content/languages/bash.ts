@@ -173,10 +173,10 @@ export const SNIPPETS: Snippet[] = [
     category: "functions",
     difficulty: "medium",
     label: "[[ =~ ]]",
-    description: "[[ =~ ]] の正規表現と (( )) の算術で引数を確かめ、終了ステータスで真偽を返す関数",
+    description: "[[ =~ ]] の正規表現と (( )) の算術でポート番号かを確かめ、終了ステータスで真偽を返す関数",
     code: j(
       "is_port() {",
-      '  [[ "$1" =~ ^[0-9]+$ ]] && (( $1 > 0 && $1 < 65536 ))',
+      '  [[ "$1" =~ ^[1-9][0-9]{0,4}$ ]] && (( $1 <= 65535 ))',
       "}",
       'if is_port "${PORT:-8080}"; then',
       '  echo "port ok"',
