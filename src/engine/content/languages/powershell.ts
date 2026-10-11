@@ -227,12 +227,12 @@ export const SNIPPETS: Snippet[] = [
     language: "powershell",
     category: "flow",
     difficulty: "medium",
-    label: "?? / ?: / &&",
-    description: "PowerShell 7 の ?? で既定値を入れ、三項演算子で分岐し、&& で成功したときだけ次を実行する",
+    label: "?? / ternary",
+    description: "PowerShell 7 の ?? で環境変数が無いときの既定値を入れ、三項演算子 ? : で分岐する",
     code: j(
       "$port = $env:PORT ?? 8080",
       '$scheme = ($port -eq 443) ? "https" : "http"',
-      'Test-Path ./config.json && Write-Output "config found"',
+      '"${scheme}://localhost:$port"',
     ),
   },
   {

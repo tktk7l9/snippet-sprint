@@ -231,11 +231,12 @@ export const SNIPPETS: Snippet[] = [
     label: "next / last LABEL",
     description: "ラベル付きの next / last で、内側のループから外側のループを進めたり抜けたりする",
     code: j(
+      "my @seen;",
       "ROW: for my $row (@grid) {",
       "    for my $cell (@$row) {",
       '        next ROW if $cell eq "#";',
       '        last ROW if $cell eq "END";',
-      "        print $cell;",
+      "        push @seen, $cell;",
       "    }",
       "}",
     ),
