@@ -222,11 +222,10 @@ export const SNIPPETS: Snippet[] = [
     category: "async",
     difficulty: "hard",
     label: "GenServer",
-    description: "クライアント関数（start_link・next）とコールバック（init・handle_call）で、次の番号を状態に持つ GenServer を作る",
+    description: "クライアント関数 next とコールバック（init・handle_call）で、次の番号を状態に持つ GenServer を作る",
     code: j(
       "defmodule Counter do",
       "  use GenServer",
-      "  def start_link(n), do: GenServer.start_link(__MODULE__, n)",
       "  def next(pid), do: GenServer.call(pid, :next)",
       "  @impl true",
       "  def init(n), do: {:ok, n}",
