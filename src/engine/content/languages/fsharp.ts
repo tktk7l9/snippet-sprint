@@ -180,7 +180,14 @@ export const SNIPPETS: Snippet[] = [
     difficulty: "easy",
     label: "list expression",
     description: "リスト式の中で for と if を使い、偶数の二乗だけを集める",
-    code: j("let squares = [ for i in 1..10 do if i % 2 = 0 then i * i ]", 'printfn "%A" squares'),
+    code: j(
+      "let squares =",
+      "    [",
+      "        for i in 1..10 do",
+      "            if i % 2 = 0 then",
+      "                i * i",
+      "    ]",
+    ),
   },
   {
     id: "fsharp-count-by",
@@ -201,14 +208,10 @@ export const SNIPPETS: Snippet[] = [
     category: "flow",
     difficulty: "hard",
     label: "Result.bind",
-    description: "TryParse の結果を Result に変え、Result.bind で失敗するかもしれない処理をつなぐ",
+    description: "Result.bind で失敗するかもしれない検証をつなぎ、途中で Error になったら残りは飛ばす",
     code: j(
-      "let parse (s: string) =",
-      "    match System.Int32.TryParse s with",
-      "    | true, n -> Ok n",
-      '    | _ -> Error $"not a number: {s}"',
-      'let half n = if n % 2 = 0 then Ok(n / 2) else Error "odd"',
-      'let result = parse "42" |> Result.bind half',
+      "let validate input =",
+      "    input |> parseInt |> Result.bind ensurePositive |> Result.bind ensureEven",
     ),
   },
   {

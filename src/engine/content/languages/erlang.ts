@@ -197,7 +197,8 @@ export const SNIPPETS: Snippet[] = [
     code: j(
       "Evens = [X || X <- lists:seq(1, 10), X rem 2 =:= 0],",
       "Squares = [X * X || X <- Evens],",
-      "Pairs = [{L, N} || L <- [a, b], N <- [1, 2]].",
+      "Pairs = [{L, N} || L <- [a, b], N <- [1, 2]],",
+      "{Squares, Pairs}.",
     ),
   },
   {
@@ -232,9 +233,9 @@ export const SNIPPETS: Snippet[] = [
     category: "async",
     difficulty: "hard",
     label: "spawn_monitor",
-    description: "spawn_monitor でプロセスを監視し、終了すると届く 'DOWN' メッセージで理由を受け取る",
+    description: "spawn_monitor でジョブのプロセスを監視し、終了すると届く 'DOWN' メッセージで理由（normal か異常）を受け取る",
     code: j(
-      "{Pid, Ref} = spawn_monitor(fun() -> exit(crashed) end),",
+      "{Pid, Ref} = spawn_monitor(fun() -> process_job(Job) end),",
       "receive",
       "    {'DOWN', Ref, process, Pid, Reason} -> {stopped, Reason}",
       "after 1000 -> timeout",
