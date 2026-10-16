@@ -39,14 +39,26 @@ async function flush(): Promise<void> {
   await new Promise((r) => setTimeout(r, 0));
 }
 
-function stubIdle(): void {
+/**
+ * jsdom ships no requestIdleCallback, so without a stub warmRest() falls back
+ * to a real 2 s timer. That timer outlives its test and calls warmAll in
+ * whichever test is running two seconds later (on a slow CI box: the Save-Data
+ * test). Every test therefore gets a stub; by default idle time never comes,
+ * and the tests about the warm-up itself ask for the callback to run at once.
+ */
+function stubIdle(idle: "never" | "now" = "never"): void {
   Object.defineProperty(window, "requestIdleCallback", {
     value: (cb: () => void) => {
-      cb();
+      if (idle === "now") cb();
       return 1;
     },
     configurable: true,
   });
+}
+
+/** Back to jsdom's reality: no requestIdleCallback at all. */
+function unstubIdle(): void {
+  delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
 }
 
 function stubConnection(saveData: boolean): void {
@@ -62,6 +74,7 @@ describe("main bootstrap", () => {
     localStorage.clear();
     mountApp();
     untrack = trackGlobalListeners();
+    stubIdle();
     mocks.createGame.mockReset().mockReturnValue(mocks.controller);
     for (const fn of Object.values(mocks.controller)) fn.mockReset();
     mocks.availableCategories.mockReset().mockReturnValue(new Set(["basics"]));
@@ -80,7 +93,7 @@ describe("main bootstrap", () => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
     vi.useRealTimers();
-    delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
+    unstubIdle();
     delete (navigator as { connection?: unknown }).connection;
   });
 
@@ -198,7 +211,7 @@ describe("main bootstrap", () => {
   });
 
   it("warms the remaining languages in idle time after the first round starts, once", async () => {
-    stubIdle();
+    stubIdle("now");
     await import("./main.js");
     await user.click(screen.getByRole("button", { name: "START" }));
     await flush();
@@ -209,7 +222,7 @@ describe("main bootstrap", () => {
   });
 
   it("tries the warm-up again on a later START when it failed (offline), and skips it under Save-Data", async () => {
-    stubIdle();
+    stubIdle("now");
     mocks.warmAll.mockRejectedValueOnce(new Error("offline"));
     await import("./main.js");
     await user.click(screen.getByRole("button", { name: "START" }));
@@ -230,7 +243,12 @@ describe("main bootstrap", () => {
   });
 
   it("falls back to a timer when the browser has no requestIdleCallback", async () => {
-    vi.useFakeTimers();
+    unstubIdle();
+    // Name the timers to fake: by default vitest fakes every timer function that
+    // existed when it first looked at the globals, which in this file includes
+    // the requestIdleCallback stub, and a fake requestIdleCallback would run
+    // the callback on the next tick instead of leaving it to the 2 s fallback.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     await import("./main.js");
     byId("start-btn").click();
     await vi.advanceTimersByTimeAsync(10);
