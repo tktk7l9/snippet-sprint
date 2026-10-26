@@ -218,6 +218,8 @@ kbd {
   backdrop-filter: blur(6px);
 }
 .fab:hover { background: rgba(92,242,255,0.15); }
+/* Alt text "" keeps the glyph out of the accessible name. */
+.fab-glyph-pause::before { content: "Ⅱ"; content: "Ⅱ" / ""; }
 
 /* ---------- Buttons / pills ---------- */
 .btn {
