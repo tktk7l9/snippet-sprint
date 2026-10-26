@@ -21,11 +21,14 @@ export function setMuted(muted: boolean): void {
   if (!pill) {
     pill = document.createElement("button");
     pill.type = "button";
-    pill.setAttribute("aria-label", "効果音");
     bar.appendChild(pill);
   }
+  const word = muted ? "MUTED" : "SOUND";
   pill.className = `status-pill ${muted ? "off" : "on"}`;
-  pill.textContent = muted ? "🔇 MUTED" : "🔊 SOUND";
+  pill.textContent = muted ? `🔇 ${word}` : `🔊 ${word}`;
+  // The name carries the visible word so voice control ("click SOUND") finds the button
+  // (WCAG 2.5.3, SHIG 94); "効果音" keeps it meaningful when read aloud.
+  pill.setAttribute("aria-label", `効果音 ${word}`);
   pill.setAttribute("aria-pressed", String(!muted));
 }
 
