@@ -160,6 +160,28 @@ describe("createGame", () => {
     expect(lastStageSignals()).toEqual({ progress: 0, combo: 0, accuracy: 1, active: false });
   });
 
+  it("reports a missing WebGL context as its own error so START can explain it", async () => {
+    mountApp();
+    stubMatchMedia([]);
+    const { createRenderContext } = await import("./render/renderer.js");
+    const cause = new Error("Error creating WebGL context.");
+    vi.mocked(createRenderContext).mockImplementationOnce(() => {
+      throw cause;
+    });
+    const { createGame } = await import("./game.js");
+    const { WebGLUnavailableError } = await import("./errors.js");
+    const screens = new Screens({ onStart: vi.fn(), onRetry: vi.fn(), onNext: vi.fn(), onMenu: vi.fn(), onReload: vi.fn() });
+    let thrown: unknown;
+    try {
+      createGame(screens);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(WebGLUnavailableError);
+    expect((thrown as Error).cause).toBe(cause);
+    expect((thrown as Error).name).toBe("WebGLUnavailableError");
+  });
+
   it("START hides the menu, shows the HUD, and typing advances the snippet", async () => {
     const h = await boot();
     await user.click(screen.getByRole("button", { name: "START" }));
@@ -464,6 +486,17 @@ describe("createGame", () => {
       expect(byId("progress-fill").style.width).toBe("50%");
       sink.dispatchEvent(new InputEvent("beforeinput", { inputType: "deleteContentBackward", bubbles: true, cancelable: true }));
       expect(byId("code").querySelectorAll("span")[0].className).toBe("ch current");
+    });
+
+    it("counts a physical key once even though keydown and beforeinput both fire", async () => {
+      const h = await boot({ touch: true });
+      h.game.start(CONFIG);
+      const sink = byId<HTMLInputElement>("key-sink");
+      // Real browsers dispatch keydown first, then beforeinput on the focused sink.
+      sink.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true }));
+      sink.dispatchEvent(new InputEvent("beforeinput", { inputType: "insertText", data: "a", bubbles: true, cancelable: true }));
+      expect(byId("progress-fill").style.width).toBe("50%");
+      expect(byId("code").querySelectorAll("span")[1].className).toBe("ch current");
     });
 
     it("fits the app frame to the visual viewport so the soft keyboard covers nothing", async () => {

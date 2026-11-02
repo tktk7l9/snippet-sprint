@@ -6,6 +6,7 @@ import { availableCategories, availableDifficulties } from "./engine/availabilit
 import { isLoaded, loadLanguages, poolFor, warmAll } from "./engine/content/index.js";
 import { Screens } from "./ui/screens.js";
 import type { GameController } from "./game.js";
+import { WebGLUnavailableError } from "./errors.js";
 import type { PlayConfig } from "./modes/types.js";
 
 // Cloudflare Web Analytics — production only. The site token is a public
@@ -59,7 +60,15 @@ async function boot(cfg: PlayConfig): Promise<void> {
     // The round waits only for the chosen languages; the Three.js chunk loads alongside.
     const [g] = await Promise.all([ensureGame(), loadLanguages(cfg.languages)]);
     g.start(cfg);
-  } catch {
+  } catch (e) {
+    if (e instanceof WebGLUnavailableError) {
+      // Reloading will not help here, so offer what will instead (SHIG 55, 66, 11).
+      screens.showStartError(
+        "この端末・ブラウザでは 3D 表示（WebGL）が使えないため、始められません。ブラウザの設定でハードウェア アクセラレーションをオンにするか、別のブラウザで開いてください。",
+        { reload: false },
+      );
+      return;
+    }
     screens.showStartError("読み込めませんでした。接続を確認して、再読み込みしてください。");
     return;
   }

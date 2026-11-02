@@ -8,6 +8,7 @@ import { byId } from "./ui/dom.js";
 import { setMuted, toast } from "./ui/feedback.js";
 import { AudioEngine } from "./audio/audio.js";
 import { attachKeyboard } from "./input/keyboard.js";
+import { KeyEcho } from "./input/dedupe.js";
 import { attachMobileInput, focusSink, isTouchDevice } from "./input/mobile.js";
 import { StatsTracker } from "./engine/stats.js";
 import type { Rank } from "./engine/scoring.js";
@@ -19,6 +20,7 @@ import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
 import type { Snippet } from "./engine/content/types.js";
 import type { Screens } from "./ui/screens.js";
 import { safeStore } from "./storage.js";
+import { WebGLUnavailableError } from "./errors.js";
 
 export interface GameController {
   start(config: PlayConfig): void;
@@ -36,7 +38,13 @@ const store: RecordStore = safeStore;
 export function createGame(screens: Screens): GameController {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const canvas = byId<HTMLCanvasElement>("scene");
-  const ctx = createRenderContext(canvas, reducedMotion);
+  let ctx: ReturnType<typeof createRenderContext>;
+  try {
+    ctx = createRenderContext(canvas, reducedMotion);
+  } catch (e) {
+    // Three.js throws when the GPU / browser refuses a WebGL context.
+    throw new WebGLUnavailableError(e);
+  }
   const stage = new Stage(ctx);
   const effects = new EffectsLayer(reducedMotion);
   ctx.scene.add(effects.group);
@@ -162,8 +170,14 @@ export function createGame(screens: Screens): GameController {
     }
   }
 
+  // A physical keyboard on a touch device fires both keydown and the sink's
+  // beforeinput for one key; the echo guard makes it count once.
+  const echo = new KeyEcho();
   attachKeyboard({
-    onChar: routeChar,
+    onChar: (ch) => {
+      echo.claim(ch);
+      routeChar(ch);
+    },
     onBackspace: routeBackspace,
     onEscape,
     onRestart,
@@ -171,7 +185,7 @@ export function createGame(screens: Screens): GameController {
     isInGame: () => state === "playing" || state === "paused",
   });
   if (isTouchDevice()) {
-    attachMobileInput(sink, { onChar: routeChar, onBackspace: routeBackspace });
+    attachMobileInput(sink, { onChar: routeChar, onBackspace: routeBackspace }, echo);
     byId("app").addEventListener("pointerdown", (e) => {
       // Taps on on-screen controls (PAUSE / HELP / sound) should not pop the keyboard.
       if ((e.target as Element | null)?.closest("button")) return;

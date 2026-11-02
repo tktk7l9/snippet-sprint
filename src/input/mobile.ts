@@ -2,6 +2,7 @@
 // keyboard; we read characters from `beforeinput` events (which mobile keyboards
 // fire reliably, unlike keydown) and keep the field empty.
 
+import type { KeyEcho } from "./dedupe.js";
 import type { KeyboardHooks } from "./keyboard.js";
 
 export function isTouchDevice(): boolean {
@@ -11,6 +12,8 @@ export function isTouchDevice(): boolean {
 export function attachMobileInput(
   sink: HTMLInputElement,
   hooks: Pick<KeyboardHooks, "onChar" | "onBackspace">,
+  /** Drops text a physical keyboard already delivered through keydown. */
+  echo?: KeyEcho,
 ): () => void {
   const onBeforeInput = (e: Event): void => {
     const ev = e as InputEvent;
@@ -25,8 +28,9 @@ export function attachMobileInput(
       return;
     }
     if (ev.data) {
-      for (const ch of ev.data) hooks.onChar(ch);
       ev.preventDefault();
+      if (echo?.isEcho(ev.data)) return;
+      for (const ch of ev.data) hooks.onChar(ch);
     }
   };
 

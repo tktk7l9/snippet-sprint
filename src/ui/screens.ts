@@ -162,9 +162,10 @@ export class Screens {
    * fetched): say why next to START and offer the way out, a reload, since a
    * module that failed to fetch stays failed until then (SHIG 55, 66, 60).
    */
-  showStartError(message: string): void {
+  showStartError(message: string, opts: { reload?: boolean } = {}): void {
     this.startError.textContent = message;
-    this.startReload.hidden = false;
+    // Hide the reload button when reloading cannot fix the cause (SHIG 1).
+    this.startReload.hidden = opts.reload === false;
   }
 
   config(): PlayConfig {

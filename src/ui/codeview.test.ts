@@ -69,4 +69,61 @@ describe("CodeView", () => {
     expect(el.textContent).toBe("xy");
     expect(el.querySelectorAll("span")).toHaveLength(2);
   });
+
+  describe("in a panel shorter than the snippet", () => {
+    // jsdom has no layout: give each span a line box and the panel a height.
+    function layOut(lineHeight: number, panel: number, total: number): void {
+      Object.defineProperty(el, "clientHeight", { configurable: true, value: panel });
+      Object.defineProperty(el, "scrollHeight", { configurable: true, value: total });
+      el.querySelectorAll("span").forEach((span, i) => {
+        Object.defineProperty(span, "offsetTop", { configurable: true, value: i * lineHeight });
+        Object.defineProperty(span, "offsetHeight", { configurable: true, value: lineHeight });
+      });
+    }
+
+    it("scrolls so the cursor line stays in view, and starts at the top on remount", () => {
+      const view = new CodeView(el);
+      const session = new TypingSession("a\nb\nc\nd\ne\nf\ng\nh");
+      view.mount(session);
+      layOut(10, 40, 150); // one span per 10px line: every character sits on its own line
+      session.input("a");
+      view.refresh(session); // cursor at 10px: comfortably inside
+      expect(el.scrollTop).toBe(0);
+      for (const ch of "\nb\nc") session.input(ch);
+      view.refresh(session); // cursor at 50px: below the 40px panel
+      expect(el.scrollTop).toBeCloseTo(50 - 40 / 3);
+      view.mount(new TypingSession("xy"));
+      expect(el.scrollTop).toBe(0);
+    });
+
+    it("leaves the scroll alone when the cursor is already visible, or nothing overflows", () => {
+      const view = new CodeView(el);
+      const session = new TypingSession("abcdefgh");
+      view.mount(session);
+      layOut(10, 40, 40);
+      for (const ch of "abcdefg") session.input(ch);
+      view.refresh(session);
+      expect(el.scrollTop).toBe(0);
+      layOut(10, 40, 80);
+      el.scrollTop = 0;
+      const short = new TypingSession("ab");
+      view.mount(short);
+      layOut(10, 40, 80);
+      short.input("a");
+      view.refresh(short);
+      expect(el.scrollTop).toBe(0);
+    });
+
+    it("does nothing once the cursor has run past the last character", () => {
+      const view = new CodeView(el);
+      const session = new TypingSession("ab");
+      view.mount(session);
+      layOut(10, 5, 20);
+      el.scrollTop = 7;
+      session.input("a");
+      session.input("b");
+      view.refresh(session);
+      expect(el.scrollTop).toBe(7);
+    });
+  });
 });

@@ -195,6 +195,23 @@ describe("main bootstrap", () => {
     expect(mocks.controller.start).toHaveBeenCalledTimes(1);
   });
 
+  it("says plainly that WebGL is missing and what to do, without a reload that cannot help", async () => {
+    await import("./main.js");
+    const { WebGLUnavailableError } = await import("./errors.js");
+    mocks.createGame.mockImplementation(() => {
+      throw new WebGLUnavailableError(new Error("Error creating WebGL context."));
+    });
+    byId("start-btn").click();
+    await flush();
+    expect(mocks.controller.start).not.toHaveBeenCalled();
+    const alert = screen.getByRole("alert").textContent ?? "";
+    expect(alert).toContain("3D 表示（WebGL）が使えない");
+    expect(alert).toContain("ハードウェア アクセラレーション");
+    expect(alert).not.toContain("接続");
+    expect(byId("start-reload").hidden).toBe(true);
+    expect(isShown("start-screen")).toBe(true);
+  });
+
   it("retries the game chunk after a failed warm-up instead of staying broken", async () => {
     mocks.createGame.mockImplementationOnce(() => {
       throw new Error("chunk failed");
