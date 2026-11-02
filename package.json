@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "verify:snippets": "node --disable-warning=ExperimentalWarning scripts/verify-snippets.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

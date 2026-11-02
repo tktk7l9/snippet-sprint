@@ -42,6 +42,7 @@ npm run typecheck   # tsc --noEmit
 npm run test        # Vitest（純ロジック + jsdom の UI 振る舞いテスト）
 npm run coverage    # src/engine を 100%、UI 層（ui / input / modes / audio / game / main）を 98% 行カバレッジでゲート
 npm run build       # 型チェック + 本番ビルド
+npm run verify:snippets  # ビルド済み dist を実 Chrome で通し確認（origin/main との差分、375×667 と 1280×800）。--all で全問
 ```
 
 ### 構成
