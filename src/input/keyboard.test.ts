@@ -39,6 +39,11 @@ describe("attachKeyboard", () => {
       expect(e.defaultPrevented).toBe(true);
     });
 
+    it("ignores a keydown that carries no key", () => {
+      expect(() => window.dispatchEvent(new Event("keydown"))).not.toThrow();
+      expect(hooks.onChar).not.toHaveBeenCalled();
+    });
+
     it("does not prevent default for ordinary letters", () => {
       const e = pressKey("a");
       expect(e.defaultPrevented).toBe(false);
