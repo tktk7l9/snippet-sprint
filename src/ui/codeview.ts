@@ -1,5 +1,6 @@
 // Renders a TypingSession into a target element as per-character spans,
-// updating only the spans whose state changed.
+// updating only the spans whose state changed. When the snippet is taller than
+// its panel (phones), the panel scrolls and follows the cursor.
 
 import type { TypingSession } from "../engine/typing.js";
 
@@ -24,6 +25,7 @@ export class CodeView {
       frag.appendChild(span);
     });
     this.el.appendChild(frag);
+    this.el.scrollTop = 0;
   }
 
   refresh(session: TypingSession): void {
@@ -33,6 +35,23 @@ export class CodeView {
         this.spans[i].className = cls;
         this.cache[i] = cls;
       }
+    }
+    this.follow(session.index);
+  }
+
+  /**
+   * Keep the cursor line visible inside a scrolling panel, with a line of
+   * context above it, so the next characters are always on screen (SHIG 85).
+   */
+  private follow(index: number): void {
+    const span = this.spans[index];
+    const view = this.el.clientHeight;
+    if (!span || this.el.scrollHeight <= view) return;
+    const top = span.offsetTop;
+    const bottom = top + span.offsetHeight;
+    const margin = span.offsetHeight * 1.5;
+    if (top - margin < this.el.scrollTop || bottom + margin > this.el.scrollTop + view) {
+      this.el.scrollTop = Math.max(0, top - view / 3);
     }
   }
 

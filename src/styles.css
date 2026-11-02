@@ -115,6 +115,8 @@ kbd {
   -webkit-backdrop-filter: blur(10px);
   min-height: 64px;
   margin: 0;
+  /* Offset parent for the spans, so CodeView can scroll the cursor into view. */
+  position: relative;
 }
 .codepre .ch { position: relative; border-radius: 2px; transition: color 0.05s linear; }
 .codepre .ch.pending { color: var(--dim); }
@@ -451,6 +453,28 @@ kbd {
   .fab { min-width: 40px; padding: 6px 10px; letter-spacing: 0; }
   .fab .fab-text { display: none; }
   #progress { bottom: 80px; }
+  /* Long snippets used to grow out of the centre and under the Stats panel at
+     375x667. Keep the code inside the band between the top HUD and the progress
+     bar instead, wrap it to the full width, and scroll inside the panel when it
+     is still taller (CodeView follows the cursor). The band also shrinks with the
+     visual viewport when the soft keyboard opens (SHIG 85, 30, 52). */
+  #code-wrap {
+    top: 136px;
+    bottom: 96px;
+    transform: translateX(-50%);
+    width: calc(100vw - 32px);
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+  }
+  #code-wrap .codepre {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 14px 16px;
+  }
+  #code-desc { flex: none; margin-top: 10px; }
 }
 
 /* Phone widths: stack the controls so they stay clear of the Stats and Snippet
