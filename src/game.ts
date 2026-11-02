@@ -20,6 +20,7 @@ import type { GameMode, ModeServices, PlayConfig } from "./modes/types.js";
 import type { Snippet } from "./engine/content/types.js";
 import type { Screens } from "./ui/screens.js";
 import { safeStore } from "./storage.js";
+import { WebGLUnavailableError } from "./errors.js";
 
 export interface GameController {
   start(config: PlayConfig): void;
@@ -37,7 +38,13 @@ const store: RecordStore = safeStore;
 export function createGame(screens: Screens): GameController {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const canvas = byId<HTMLCanvasElement>("scene");
-  const ctx = createRenderContext(canvas, reducedMotion);
+  let ctx: ReturnType<typeof createRenderContext>;
+  try {
+    ctx = createRenderContext(canvas, reducedMotion);
+  } catch (e) {
+    // Three.js throws when the GPU / browser refuses a WebGL context.
+    throw new WebGLUnavailableError(e);
+  }
   const stage = new Stage(ctx);
   const effects = new EffectsLayer(reducedMotion);
   ctx.scene.add(effects.group);
