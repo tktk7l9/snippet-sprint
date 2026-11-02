@@ -15,6 +15,8 @@ export interface KeyboardHooks {
 
 export function attachKeyboard(hooks: KeyboardHooks): () => void {
   const handler = (e: KeyboardEvent): void => {
+    // Plain Events can reach this listener (the DOM types claim otherwise): `key` is then undefined.
+    if (typeof e.key !== "string") return;
     // leave OS / browser shortcuts (copy, devtools, ...) alone
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
