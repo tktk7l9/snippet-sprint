@@ -148,8 +148,10 @@
         <!-- ===== Play HUD ===== -->
         <div id="play-hud">
           <div id="play-controls">
-            <button id="pause-fab" class="fab" type="button" aria-label="ポーズ"><span aria-hidden="true">Ⅱ</span><span class="fab-text"> PAUSE</span></button>
-            <button id="help-fab" class="fab" type="button" aria-label="遊び方"><span aria-hidden="true">?</span><span class="fab-text"> HELP</span></button>
+            <!-- The name starts with the visible word so voice control ("click PAUSE") finds it (WCAG 2.5.3, SHIG 94).
+                 The pause glyph is drawn by CSS: as text, "Ⅱ" counted as part of the visible label. -->
+            <button id="pause-fab" class="fab" type="button" aria-label="PAUSE ポーズ"><span class="fab-glyph-pause" aria-hidden="true"></span><span class="fab-text"> PAUSE</span></button>
+            <button id="help-fab" class="fab" type="button" aria-label="HELP 遊び方"><span aria-hidden="true">?</span><span class="fab-text"> HELP</span></button>
           </div>
           <div id="status-bar"></div>
 

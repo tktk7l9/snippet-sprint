@@ -153,7 +153,7 @@ describe("createGame", () => {
   it("wires the effects layer into the scene and starts the render loop", async () => {
     const h = await boot();
     expect(mocks.ctx.scene.add).toHaveBeenCalledWith(mocks.effects.group);
-    expect(screen.getByRole("button", { name: "効果音", pressed: true })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^効果音/, pressed: true })).toBeTruthy();
     h.tick(16);
     h.frame();
     expect(mocks.ctx.render).toHaveBeenCalledTimes(1);
@@ -307,7 +307,7 @@ describe("createGame", () => {
     const h = await boot();
     h.game.start(CONFIG);
     pressKey("a");
-    await user.click(screen.getByRole("button", { name: "ポーズ" }));
+    await user.click(screen.getByRole("button", { name: /ポーズ/ }));
     expect(isShown("pause-overlay")).toBe(true);
     await user.click(screen.getByRole("button", { name: "RESUME" }));
     expect(isShown("pause-overlay")).toBe(false);
@@ -359,7 +359,7 @@ describe("createGame", () => {
 
     h.game.start(CONFIG);
     pressKey("a");
-    await user.click(within(byId("play-hud")).getByRole("button", { name: "遊び方" }));
+    await user.click(within(byId("play-hud")).getByRole("button", { name: /遊び方/ }));
     expect(isShown("help-overlay")).toBe(true);
     pressKey("b");
     expect(byId("progress-fill").style.width).toBe("50%");
@@ -376,7 +376,7 @@ describe("createGame", () => {
 
   it("the sound pill toggles mute in place", async () => {
     await boot();
-    const pill = screen.getByRole("button", { name: "効果音" });
+    const pill = screen.getByRole("button", { name: /^効果音/ });
     await user.click(pill);
     expect(pill.getAttribute("aria-pressed")).toBe("false");
     expect(pill.textContent).toContain("MUTED");
@@ -386,13 +386,13 @@ describe("createGame", () => {
 
   it("remembers the mute choice for the next launch", async () => {
     await boot();
-    await user.click(screen.getByRole("button", { name: "効果音" }));
+    await user.click(screen.getByRole("button", { name: /^効果音/ }));
     expect(localStorage.getItem("snippet-sprint:muted:v1")).toBe("1");
     untrack();
     untrack = trackGlobalListeners();
     vi.resetModules();
     await boot();
-    const pill = screen.getByRole("button", { name: "効果音" });
+    const pill = screen.getByRole("button", { name: /^効果音/ });
     expect(pill.getAttribute("aria-pressed")).toBe("false");
     expect(pill.textContent).toContain("MUTED");
     await user.click(pill);
@@ -491,10 +491,10 @@ describe("createGame", () => {
       const h = await boot({ touch: true });
       h.game.start(CONFIG);
       const sink = byId<HTMLInputElement>("key-sink");
-      await user.click(screen.getByRole("button", { name: "ポーズ" }));
+      await user.click(screen.getByRole("button", { name: /ポーズ/ }));
       await user.click(screen.getByRole("button", { name: "RESUME" }));
       expect(document.activeElement).toBe(sink);
-      await user.click(screen.getByRole("button", { name: "効果音" }));
+      await user.click(screen.getByRole("button", { name: /^効果音/ }));
       expect(document.activeElement).toBe(sink);
     });
   });

@@ -53,20 +53,23 @@ describe("setMuted", () => {
 
   it("creates one real button with an accessible label and pressed state", () => {
     setMuted(false);
-    const pill = screen.getByRole("button", { name: "効果音", pressed: true });
+    const pill = screen.getByRole("button", { name: /^効果音/, pressed: true });
     expect(pill.textContent).toContain("SOUND");
+    // The name contains the visible word (WCAG 2.5.3 label in name).
+    expect(pill.getAttribute("aria-label")).toBe("効果音 SOUND");
     expect(pill.classList.contains("on")).toBe(true);
     expect(byId("status-bar").querySelectorAll("button")).toHaveLength(1);
   });
 
   it("updates the same button in place when muted so focus survives", () => {
     setMuted(false);
-    const pill = screen.getByRole("button", { name: "効果音" });
+    const pill = screen.getByRole("button", { name: /^効果音/ });
     pill.focus();
     setMuted(true);
     expect(document.activeElement).toBe(pill);
     expect(pill.getAttribute("aria-pressed")).toBe("false");
     expect(pill.textContent).toContain("MUTED");
+    expect(pill.getAttribute("aria-label")).toBe("効果音 MUTED");
     expect(pill.classList.contains("off")).toBe(true);
     expect(byId("status-bar").querySelectorAll("button")).toHaveLength(1);
   });
