@@ -466,6 +466,17 @@ describe("createGame", () => {
       expect(byId("code").querySelectorAll("span")[0].className).toBe("ch current");
     });
 
+    it("counts a physical key once even though keydown and beforeinput both fire", async () => {
+      const h = await boot({ touch: true });
+      h.game.start(CONFIG);
+      const sink = byId<HTMLInputElement>("key-sink");
+      // Real browsers dispatch keydown first, then beforeinput on the focused sink.
+      sink.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true }));
+      sink.dispatchEvent(new InputEvent("beforeinput", { inputType: "insertText", data: "a", bubbles: true, cancelable: true }));
+      expect(byId("progress-fill").style.width).toBe("50%");
+      expect(byId("code").querySelectorAll("span")[1].className).toBe("ch current");
+    });
+
     it("fits the app frame to the visual viewport so the soft keyboard covers nothing", async () => {
       const vv = Object.assign(new EventTarget(), { height: 420.4, offsetTop: 12.6, scale: 1 });
       vi.stubGlobal("visualViewport", vv);

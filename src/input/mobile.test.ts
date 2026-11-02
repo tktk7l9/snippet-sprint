@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubMatchMedia } from "../test/dom.js";
+import { KeyEcho } from "./dedupe.js";
 import { attachMobileInput, focusSink, isTouchDevice } from "./mobile.js";
 
 function beforeInput(sink: HTMLInputElement, inputType: string, data: string | null = null): InputEvent {
@@ -58,6 +59,19 @@ describe("attachMobileInput", () => {
     const e = beforeInput(sink, "insertCompositionText", null);
     expect(hooks.onChar).not.toHaveBeenCalled();
     expect(e.defaultPrevented).toBe(false);
+  });
+
+  it("drops the echo of a key the physical keyboard already delivered", () => {
+    detach();
+    const echo = new KeyEcho(() => 0);
+    detach = attachMobileInput(sink, hooks, echo);
+    echo.claim("a");
+    const dup = beforeInput(sink, "insertText", "a");
+    expect(hooks.onChar).not.toHaveBeenCalled();
+    // The echo is still swallowed so the field stays empty.
+    expect(dup.defaultPrevented).toBe(true);
+    beforeInput(sink, "insertText", "a");
+    expect(hooks.onChar.mock.calls).toEqual([["a"]]);
   });
 
   it("stops listening once detached", () => {
