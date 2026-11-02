@@ -219,4 +219,28 @@ export const SNIPPETS: Snippet[] = [
       "fi",
     ),
   },
+  {
+    id: "bash-process-subst",
+    language: "bash",
+    category: "functions",
+    difficulty: "medium",
+    label: "<( ) process subst",
+    description: "プロセス置換 <( ) でコマンドの出力をファイルのように渡し、並べ替えてから比べる",
+    code: j(
+      "diff <(sort old.txt) <(sort new.txt)",
+    ),
+  },
+  {
+    id: "bash-string-ops",
+    language: "bash",
+    category: "basics",
+    difficulty: "medium",
+    label: "${var//a/b}",
+    description: "パラメータ展開で文字列を置換し、位置と長さを指定して切り出す",
+    code: j(
+      'file="report-2026.txt"',
+      'echo "${file//-/_}"',
+      'echo "${file:0:6}"',
+    ),
+  },
 ];

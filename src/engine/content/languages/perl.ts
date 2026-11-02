@@ -258,6 +258,32 @@ export const SNIPPETS: Snippet[] = [
       "})->wait;",
     ),
   },
+  {
+    id: "perl-postfix-deref",
+    language: "perl",
+    category: "basics",
+    difficulty: "medium",
+    label: "postfix deref ->@*",
+    description: "後置デリファレンス ->@* と ->$#* で、リファレンスを左から右へ読める形でたどる",
+    code: j(
+      'my $user = { name => "Ada", langs => ["Perl", "C"] };',
+      'print join(", ", $user->{langs}->@*), "\\n";',
+      'print "last index: ", $user->{langs}->$#*, "\\n";',
+    ),
+  },
+  {
+    id: "perl-chained-compare",
+    language: "perl",
+    category: "flow",
+    difficulty: "easy",
+    label: "chained comparison",
+    description: "use v5.32 で比較を連ねて、範囲の判定を1つの式で書く",
+    code: j(
+      "use v5.32;",
+      "my $age = 36;",
+      'say "working age" if 20 <= $age < 65;',
+    ),
+  },
   // ---------------- Algorithms ----------------
   {
     id: "algo-schwartzian",
