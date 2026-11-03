@@ -16,12 +16,12 @@
     "verify:snippets": "node --disable-warning=ExperimentalWarning scripts/verify-snippets.mjs"
   },
   "dependencies": {
-    "three": "0.186.1"
+    "three": "0.187.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",
     "@testing-library/user-event": "^14.6.8",
-    "@types/three": "^0.186.0",
+    "@types/three": "^0.187.0",
     "@vitest/coverage-v8": "^5.0.5",
     "jsdom": "^30.1.3",
     "typescript": "7.0.2",
